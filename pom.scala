@@ -32,7 +32,7 @@ Model(
     "maven.compiler.target" -> "1.8",
     "project.build.sourceEncoding" -> "UTF-8"
   ),
-  name = "Maven Eclipse Project generator",
+  name = "eclipse-maven-plugin",
   description = "A Maven Plugin to generate Eclipse Project files",
   dependencies = Seq(
     // compile dependencies
