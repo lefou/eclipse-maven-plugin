@@ -18,7 +18,7 @@ object Plugins {
   val clean = "org.apache.maven.plugins" % "maven-clean-plugin" % "3.0.0"
   val gpg = "org.apache.maven.plugins" % "maven-gpg-plugin" % "1.6"
   val jar = "org.apache.maven.plugins" % "maven-jar-plugin" % "2.5"
-  val plugin = "org.apache.maven.plugins" % "maven-plugin-plugin" % "3.2"
+  val plugin = "org.apache.maven.plugins" % "maven-plugin-plugin" % "3.5.1"
   val polyglotTranslate = "io.takari.polyglot" % "polyglot-translate-plugin" % "0.2.1"
   val surefire = "org.apache.maven.plugins" % "maven-surefire-plugin" % "2.17"
 }
@@ -39,6 +39,7 @@ Model(
     Deps.mavenCore,
     Deps.mavenPluginApi,
     Deps.mavenPluginAnnotations,
+    Deps.utilsFunctional,
 
     // test dependencies
     Deps.lambdaTest % "test",
