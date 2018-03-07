@@ -1,11 +1,19 @@
 package de.tobiasroeser.maven.eclipse;
 
-public class Nature extends Tuple2<String, String> {
+import java.util.Collections;
+import java.util.List;
+
+public class Nature extends Tuple4<String, String, List<String>, List<String>> {
 
 	private static final long serialVersionUID = 20180307L;
 
+	public Nature(final String name, final String comment, final List<String> disablesNatures,
+			final List<String> mavenPluginKeys) {
+		super(name, comment, disablesNatures, mavenPluginKeys);
+	}
+
 	public Nature(final String name, final String comment) {
-		super(name, comment);
+		this(name, comment, Collections.emptyList(), Collections.emptyList());
 	}
 
 	public String getName() {
@@ -16,11 +24,21 @@ public class Nature extends Tuple2<String, String> {
 		return b();
 	}
 
+	public List<String> getDisablesNatures() {
+		return c();
+	}
+
+	public List<String> getMavenPluginKeys() {
+		return d();
+	}
+
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() +
 				"(name=" + getName() +
 				",comment=" + getComment() +
+				",disablesNatrues=" + getDisablesNatures() +
+				",mavenPluginKeys=" + getMavenPluginKeys() +
 				")";
 	}
 
