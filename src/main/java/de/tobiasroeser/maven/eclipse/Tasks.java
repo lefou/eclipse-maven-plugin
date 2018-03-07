@@ -31,7 +31,7 @@ public class Tasks {
 		printStream.println("\t<buildSpec>");
 		foreach(projectConfig.getBuilders(), b -> {
 			printStream.println("\t\t<buildCommand>");
-			printStream.println("\t\t\t<name>" + b + "</name>");
+			printStream.println("\t\t\t<name>" + b.getName() + "</name>");
 			printStream.println("\t\t\t<arguments>");
 			printStream.println("\t\t\t</arguments>");
 			printStream.println("\t\t</buildCommand>");
@@ -40,7 +40,7 @@ public class Tasks {
 
 		printStream.println("\t<natures>");
 		foreach(projectConfig.getNatures(), n -> {
-			printStream.println("\t\t<nature>" + n + "</nature>");
+			printStream.println("\t\t<nature>" + n.getName() + "</nature>");
 		});
 		printStream.println("\t</natures>");
 

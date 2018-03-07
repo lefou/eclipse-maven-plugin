@@ -11,8 +11,8 @@ public class ProjectConfig {
 	private final List<String> testSources;
 	private final List<String> resources;
 	private final List<String> testResources;
-	private final List<String> builders;
-	private final List<String> natures;
+	private final List<Builder> builders;
+	private final List<Nature> natures;
 
 	public ProjectConfig() {
 		this("", "",
@@ -31,8 +31,8 @@ public class ProjectConfig {
 			final List<String> testSources,
 			final List<String> resources,
 			final List<String> testResources,
-			final List<String> builders,
-			final List<String> natures) {
+			final List<Builder> builders,
+			final List<Nature> natures) {
 		this.name = name;
 		this.comment = comment;
 		this.sources = sources;
@@ -91,19 +91,19 @@ public class ProjectConfig {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures);
 	}
 
-	public List<String> getBuilders() {
+	public List<Builder> getBuilders() {
 		return builders;
 	}
 
-	public ProjectConfig withBuilder(final List<String> builders) {
+	public ProjectConfig withBuilders(final List<Builder> builders) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures);
 	}
 
-	public List<String> getNatures() {
+	public List<Nature> getNatures() {
 		return natures;
 	}
 
-	public ProjectConfig withNatures(final List<String> natures) {
+	public ProjectConfig withNatures(final List<Nature> natures) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures);
 	}
 

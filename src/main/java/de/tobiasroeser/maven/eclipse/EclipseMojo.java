@@ -1,6 +1,8 @@
 package de.tobiasroeser.maven.eclipse;
 
 import static de.tototec.utils.functional.FList.concat;
+import static de.tototec.utils.functional.FList.exists;
+import static de.tototec.utils.functional.FList.filter;
 import static de.tototec.utils.functional.FList.foreach;
 import static de.tototec.utils.functional.FList.map;
 
@@ -18,6 +20,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -26,6 +29,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
+import de.tototec.utils.functional.F1;
 import de.tototec.utils.functional.Optional;
 import de.tototec.utils.functional.Procedure1;
 
@@ -91,20 +95,32 @@ public class EclipseMojo extends AbstractMojo {
 
 	protected ProjectConfig readProjectConfig() {
 
-		final List<String> builders = !defaultBuilders
-				? Collections.<String>emptyList()
-				: Arrays.asList(
-						"org.eclipse.jdt.core.javabuilder",
-						"org.eclipse.m2e.core.maven2Builder");
-
-		final List<String> natures = !defaultNatures
+		final List<Builder> defBuilders = !defaultBuilders
 				? Collections.emptyList()
 				: Arrays.asList(
-						"org.eclipse.jdt.core.javanature",
-						"org.eclipse.m2e.core.maven2Nature");
+						new Builder("org.eclipse.jdt.core.javabuilder", "Default Java Builder"),
+						new Builder("org.eclipse.m2e.core.maven2Builder", "Default Maven Builder"));
 
-		// initial config
-		final ProjectConfig projectConfig = new ProjectConfig()
+		final List<Nature> defNatures = !defaultNatures
+				? Collections.emptyList()
+				: Arrays.asList(
+						new Nature("org.eclipse.jdt.core.javanature", "Default Java Nature"),
+						new Nature("org.eclipse.m2e.core.maven2Nature", "Default Maven Nature"));
+
+		final List<Tuple3<String, Nature, List<String>>> autodetectNatures_key_nature_conflicts = Arrays.asList(
+				Tuple3.of(
+						"org.codehaus.mojo:aspectj-maven-plugin",
+						new Nature("org.eclipse.ajdt.ui.ajnature", "Auto-detected AspectJ Nature from pom"),
+						Collections.emptyList()));
+
+		final List<Tuple3<String, Builder, List<String>>> autodetectBuilders_key_builder_conflicts = Arrays.asList(
+				Tuple3.of(
+						"org.codehaus.mojo:aspectj-maven-plugin",
+						new Builder("org.eclipse.ajdt.core.ajbuilder", "Auto-detected AspectJ Builder from pom"),
+						Arrays.asList("org.eclipse.jdt.core.javabuilder")));
+
+		// initial config from pom
+		ProjectConfig projectConfig = new ProjectConfig()
 				.withName(Optional.lift(mavenProject.getName())
 						.orElse(Optional.lift(mavenProject.getArtifactId()))
 						.getOrElse("undefined"))
@@ -113,8 +129,79 @@ public class EclipseMojo extends AbstractMojo {
 				.withTestSources(mavenProject.getTestCompileSourceRoots())
 				.withResources(map(mavenProject.getBuild().getResources(), r -> r.getDirectory()))
 				.withTestResources(map(mavenProject.getBuild().getTestResources(), r -> r.getDirectory()))
-				.withBuilder(builders)
-				.withNatures(natures);
+				.withBuilders(defBuilders)
+				.withNatures(defNatures);
+
+		final List<Plugin> plugins = mavenProject.getBuild().getPlugins();
+		for (final Plugin plugin : plugins) {
+			{
+				// Auto-detectable Builders
+				final List<Tuple3<String, Builder, List<String>>> detectedBuilders = filter(
+						autodetectBuilders_key_builder_conflicts,
+						t -> t.a().equals(plugin.getKey()));
+
+				if (!detectedBuilders.isEmpty()) {
+					getLog().debug("Auto-detected builders [" + map(detectedBuilders, d -> d.b()) + "] for plugin ["
+							+ plugin.getKey() + "]");
+				}
+
+				// determines, if a given builderName should be excluded
+				final F1<String, Boolean> excludeB = builderName -> exists(
+						detectedBuilders,
+						b -> exists(
+								b.c(),
+								e -> {
+									final boolean disable = builderName.equals(e);
+									if (disable) {
+										getLog().debug("Auto-detected builder [" + b.b() + "] disables default builder ["
+												+ builderName + "]");
+									}
+									return disable;
+								}));
+
+				// default Builder (if allowed) minus excluded ones plus
+				// auto-detected ones
+				final List<Builder> filteredBuilders = filter(projectConfig.getBuilders(),
+						b -> !excludeB.apply(b.getName()));
+
+				projectConfig = projectConfig.withBuilders(concat(filteredBuilders, map(detectedBuilders, d -> d.b())));
+			}
+
+			{
+				// Auto-detectable Natures
+				final List<Tuple3<String, Nature, List<String>>> detectedNatures = filter(
+						autodetectNatures_key_nature_conflicts,
+						t -> t.a().equals(plugin.getKey()));
+
+				if (!detectedNatures.isEmpty()) {
+					getLog().debug("Auto-detected natures [" + map(detectedNatures, d -> d.b()) + "] for plugin ["
+							+ plugin.getKey() + "]");
+				}
+
+				// determines, if a given natureName should be excluded
+				final F1<String, Boolean> excludeN = natureName -> exists(
+						detectedNatures,
+						b -> exists(
+								b.c(),
+								e -> {
+									final boolean disable = natureName.equals(e);
+									if (disable) {
+										getLog().debug("Auto-detected nature [" + b.b() + "] disables default nature ["
+												+ natureName + "]");
+									}
+									return disable;
+								}));
+
+				// default nature (if allowed) minus excluded ones plus
+				// auto-detected ones
+				final List<Nature> filteredNatures = filter(
+						projectConfig.getNatures(),
+						b -> !excludeN.apply(b.getName()));
+
+				projectConfig = projectConfig.withNatures(concat(filteredNatures, map(detectedNatures, d -> d.b())));
+
+			}
+		}
 
 		// enhance with config values
 		return projectConfig
@@ -122,18 +209,21 @@ public class EclipseMojo extends AbstractMojo {
 				.withResources(concat(projectConfig.getResources(), extraResources))
 				.withTestSources(concat(projectConfig.getTestSources(), extraTestSources))
 				.withTestResources(concat(projectConfig.getTestResources(), extraTestResources))
-				.withBuilder(concat(projectConfig.getBuilders(), extraBuilders))
-				.withNatures(concat(projectConfig.getNatures(), extraNatures));
+				.withBuilders(concat(projectConfig.getBuilders(),
+						map(extraBuilders, b -> new Builder(b, "Explicit Builder from pom"))))
+				.withNatures(concat(projectConfig.getNatures(),
+						map(extraNatures, n -> new Nature(n, "Explicit Nature from pom"))));
 	}
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		if (skip) {
 			getLog().info("Skipping eclipse");
+			return;
 		}
 
 		final ProjectConfig projectConfig = readProjectConfig();
-		getLog().debug("Analyzer: " + projectConfig);
+		getLog().debug("Final eclipse project config: " + projectConfig);
 
 		final File basedir = mavenProject.getBasedir();
 		final Tasks tasks = new Tasks(basedir);
