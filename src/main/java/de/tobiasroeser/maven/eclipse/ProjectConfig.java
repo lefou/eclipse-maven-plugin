@@ -1,5 +1,8 @@
 package de.tobiasroeser.maven.eclipse;
 
+import static de.tototec.utils.functional.FList.mkString;
+import static de.tototec.utils.functional.FList.take;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -13,6 +16,7 @@ public class ProjectConfig {
 	private final List<String> testResources;
 	private final List<Builder> builders;
 	private final List<Nature> natures;
+	private String javaVersion;
 
 	public ProjectConfig() {
 		this("", "",
@@ -21,7 +25,8 @@ public class ProjectConfig {
 				Collections.emptyList(),
 				Collections.emptyList(),
 				Collections.emptyList(),
-				Collections.emptyList());
+				Collections.emptyList(),
+				javaVersion(System.getProperty("java.version")));
 	}
 
 	public ProjectConfig(
@@ -32,7 +37,8 @@ public class ProjectConfig {
 			final List<String> resources,
 			final List<String> testResources,
 			final List<Builder> builders,
-			final List<Nature> natures) {
+			final List<Nature> natures,
+			final String javaVersion) {
 		this.name = name;
 		this.comment = comment;
 		this.sources = sources;
@@ -41,6 +47,11 @@ public class ProjectConfig {
 		this.testResources = testResources;
 		this.builders = builders;
 		this.natures = natures;
+		this.javaVersion = javaVersion;
+	}
+
+	public static String javaVersion(final String javaVersion) {
+		return mkString(take(javaVersion.split("[.]"), 2), ".");
 	}
 
 	public String getName() {
@@ -48,7 +59,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withName(final String name) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures);
+		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion);
 	}
 
 	public String getComment() {
@@ -56,7 +68,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withComment(final String comment) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures);
+		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion);
 	}
 
 	public List<String> getSources() {
@@ -64,7 +77,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withSources(final List<String> sources) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures);
+		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion);
 	}
 
 	public List<String> getTestSources() {
@@ -72,7 +86,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withTestSources(final List<String> testSources) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures);
+		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion);
 	}
 
 	public List<String> getResources() {
@@ -80,7 +95,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withResources(final List<String> resources) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures);
+		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion);
 	}
 
 	public List<String> getTestResources() {
@@ -88,7 +104,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withTestResources(final List<String> testResources) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures);
+		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion);
 	}
 
 	public List<Builder> getBuilders() {
@@ -96,7 +113,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withBuilders(final List<Builder> builders) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures);
+		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion);
 	}
 
 	public List<Nature> getNatures() {
@@ -104,7 +122,17 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withNatures(final List<Nature> natures) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures);
+		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion);
+	}
+
+	public String getJavaVersion() {
+		return javaVersion;
+	}
+
+	public ProjectConfig withJavaVersion(final String javaVersion) {
+		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion);
 	}
 
 	@Override

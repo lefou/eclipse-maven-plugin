@@ -91,9 +91,16 @@ public class Tasks {
 						sourcesOptional));
 
 		// con
-		generateClasspathEntry(printStream, "con",
-				"org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8",
-				Optional.none(), false);
+		final String javaVersion = projectConfig.getJavaVersion();
+		final String jrePrefix = "org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/";
+		final String jreSuffix;
+		if ("1.5".equals(javaVersion) || "1.4".equals(javaVersion)) {
+			jreSuffix = "J2SE-" + javaVersion;
+		} else {
+			jreSuffix = "JavaSE-" + javaVersion;
+		}
+
+		generateClasspathEntry(printStream, "con", jrePrefix + jreSuffix, Optional.none(), false);
 
 		generateClasspathEntry(printStream, "con", "org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER", Optional.none(),
 				false);
