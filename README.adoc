@@ -3,3 +3,9 @@
 image:https://badges.gitter.im/lefou/eclipse-maven-plugin.svg[link="https://gitter.im/lefou/eclipse-maven-plugin]
 
 A Maven Plugin to generate project files for Eclipse with M2E-Plugin
+
+== Changelog
+
+=== eclipse-maven-plugin 0.0.1 - 2018-03-08
+
+* Initial release for early testing
