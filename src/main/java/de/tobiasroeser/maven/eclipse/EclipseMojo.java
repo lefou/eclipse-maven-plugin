@@ -46,14 +46,14 @@ public class EclipseMojo extends AbstractMojo {
 	 * The output directory e.g. for compiled classes. This setting can be
 	 * overridden with {@link #alternativeOutput}.
 	 */
-	@Parameter(required = true, property = "eclipse.outputDirectory", defaultValue = "${project.build.outputDirectory}")
+	@Parameter(required = false, property = "eclipse.outputDirectory", defaultValue = "${project.build.outputDirectory}")
 	private String outputDirectory;
 
 	/**
 	 * The test output directory e.g. for compiled test classes. This setting
 	 * can be overridden with {@link #alternativeOutput}.
 	 */
-	@Parameter(required = true, property = "eclipse.testOutputDirectory", defaultValue = "${project.build.testOutputDirectory}")
+	@Parameter(required = false, property = "eclipse.testOutputDirectory", defaultValue = "${project.build.testOutputDirectory}")
 	private String testOutputDirectory;
 
 	/**
