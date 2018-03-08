@@ -1,6 +1,5 @@
 target/
 target-ide/
 /pom.xml
-
-
+mvn-deploy-settings.xml
 /gh-pages
