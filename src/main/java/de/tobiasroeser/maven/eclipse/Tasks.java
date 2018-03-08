@@ -8,6 +8,9 @@ import java.net.URI;
 
 import de.tototec.utils.functional.Optional;
 
+/**
+ * Various worker methods to generate Eclipse project files.
+ */
 public class Tasks {
 
 	private final File basedir;

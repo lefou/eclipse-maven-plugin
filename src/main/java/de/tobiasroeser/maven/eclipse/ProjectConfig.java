@@ -6,6 +6,9 @@ import static de.tototec.utils.functional.FList.take;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Project configuration data used to generate Eclipse project files.
+ */
 public class ProjectConfig {
 
 	private final String name;

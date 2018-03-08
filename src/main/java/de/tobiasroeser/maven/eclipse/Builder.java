@@ -3,6 +3,10 @@ package de.tobiasroeser.maven.eclipse;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Configuration of an Eclipse Builder, based on information extracted from the
+ * Maven pom.
+ */
 public class Builder extends Tuple4<String, String, List<String>, List<String>> {
 
 	private static final long serialVersionUID = 20180307L;

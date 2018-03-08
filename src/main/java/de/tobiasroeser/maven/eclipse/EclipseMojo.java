@@ -34,7 +34,7 @@ import de.tototec.utils.functional.Optional;
 import de.tototec.utils.functional.Procedure1;
 
 /**
- * Generated Eclipse project files from the current Maven project.
+ * Generates Eclipse project files from the current Maven project.
  */
 @Mojo(name = "eclipse", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
 public class EclipseMojo extends AbstractMojo {
