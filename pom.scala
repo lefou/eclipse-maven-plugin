@@ -9,6 +9,7 @@ implicit class RichDependency(d: Dependency) {
 
 object Deps {
   val junit4 = "junit" % "junit" % "4.12"
+  // we use the Java7 version here, because the maven site plugin has problems with the java8 version
   val lambdaTest = Dependency("de.tototec" % "de.tobiasroeser.lambdatest" % "0.4.0", classifier = "java7")
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.25"
   val utilsFunctional = "de.tototec" % "de.tototec.utils.functional" % "1.0.0"
