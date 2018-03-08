@@ -1,0 +1,14 @@
+= Introduction
+
+A Maven Plugin to generate project files for Eclipse with M2E-Plugin.
+
+Please note, that this plugin is neither the same nor a fork of the official and now retired https://maven.apache.org/plugins/maven-eclipse-plugin/[Apache Maven Eclipse Plugin (maven-eclipse-plugin)], which can generates almost the same files.
+
+== Goals Overview
+
+* link:eclipse-mojo.html[eclipse] - 
+  Generates Eclipse project files from the current Maven project.
+  
+* link:help-mojo.html[help] - 
+  Display help information on eclipse-maven-plugin. 
+  Call `mvn eclipse:help -Ddetail=true -Dgoal=<goal-name>` to display parameter details.

@@ -1,11 +1,15 @@
 import org.sonatype.maven.polyglot.scala.model._
 import scala.collection.immutable._
 
-val url = "NONE"
+val url = "https://github.com/lefou/eclipse-maven-plugin"
+
+implicit class RichDependency(d: Dependency) {
+  def %(scope: String): Dependency = new Dependency(d.gav, d.`type`, d.classifier, Option(scope), d.systemPath, d.exclusions, d.optional)
+}
 
 object Deps {
   val junit4 = "junit" % "junit" % "4.12"
-  val lambdaTest = "de.tototec" % "de.tobiasroeser.lambdatest" % "0.3.0"
+  val lambdaTest = Dependency("de.tototec" % "de.tobiasroeser.lambdatest" % "0.4.0", classifier = "java7")
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.25"
   val utilsFunctional = "de.tototec" % "de.tototec.utils.functional" % "1.0.0"
   val logbackClassic = "ch.qos.logback" % "logback-classic" % "1.1.3"
@@ -15,12 +19,17 @@ object Deps {
 }
 
 object Plugins {
+  val asciidoctor = "org.asciidoctor" % "asciidoctor-maven-plugin" % "1.5.6"
   val clean = "org.apache.maven.plugins" % "maven-clean-plugin" % "3.0.0"
   val gpg = "org.apache.maven.plugins" % "maven-gpg-plugin" % "1.6"
   val jar = "org.apache.maven.plugins" % "maven-jar-plugin" % "2.5"
+  val javadoc = "org.apache.maven.plugins" % "maven-javadoc-plugin" % "3.0.0"
+  val jxr = "org.apache.maven.plugins" % "maven-jxr-plugin" % "2.5"
   val plugin = "org.apache.maven.plugins" % "maven-plugin-plugin" % "3.5.1"
   val polyglotTranslate = "io.takari.polyglot" % "polyglot-translate-plugin" % "0.3.0"
-  val surefire = "org.apache.maven.plugins" % "maven-surefire-plugin" % "2.17"
+  val projectInfoReports = "org.apache.maven.plugins" % "maven-project-info-reports-plugin" % "2.9"
+  val site = "org.apache.maven.plugins" % "maven-site-plugin" % "3.7"
+  val surefire = "org.apache.maven.plugins" % "maven-surefire-plugin" % "2.20.1"
 }
 
 Model(
@@ -33,7 +42,10 @@ Model(
     "project.build.sourceEncoding" -> "UTF-8"
   ),
   name = "eclipse-maven-plugin",
-  description = "A Maven Plugin to generate Eclipse Project files",
+  description = "A Maven Plugin to generate project files for Eclipse with M2E-Plugin",
+  prerequisites = Prerequisites(
+    maven = "3.3"
+  ),
   dependencies = Seq(
     // compile dependencies
     Deps.mavenCore,
@@ -85,6 +97,28 @@ Model(
             )
           )
         )
+      ),
+      Plugin(
+        Plugins.site,
+        dependencies = Seq(
+          Plugins.asciidoctor
+        )
+      )
+    )
+  ),
+  reporting = Reporting(
+    plugins = Seq(
+      ReportPlugin(
+        Plugins.projectInfoReports
+      ),
+      ReportPlugin(
+        Plugins.plugin
+      ),
+      ReportPlugin(
+        Plugins.javadoc
+      ),
+      ReportPlugin(
+        Plugins.jxr
       )
     )
   ),

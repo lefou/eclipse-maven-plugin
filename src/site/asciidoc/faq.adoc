@@ -1,0 +1,6 @@
+= Frequently Asked Questions
+:toc:
+
+[TBD]
+
+// add note about Eclipse requirements, e.g. the M2E-Plugin must be installed

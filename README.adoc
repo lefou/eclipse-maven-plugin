@@ -1,0 +1,3 @@
+= Eclipse Maven Plugin
+
+A Maven Plugin to generate project files for Eclipse with M2E-Plugin
