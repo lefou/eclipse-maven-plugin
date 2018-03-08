@@ -19,7 +19,7 @@ object Plugins {
   val gpg = "org.apache.maven.plugins" % "maven-gpg-plugin" % "1.6"
   val jar = "org.apache.maven.plugins" % "maven-jar-plugin" % "2.5"
   val plugin = "org.apache.maven.plugins" % "maven-plugin-plugin" % "3.5.1"
-  val polyglotTranslate = "io.takari.polyglot" % "polyglot-translate-plugin" % "0.2.1"
+  val polyglotTranslate = "io.takari.polyglot" % "polyglot-translate-plugin" % "0.3.0"
   val surefire = "org.apache.maven.plugins" % "maven-surefire-plugin" % "2.17"
 }
 
