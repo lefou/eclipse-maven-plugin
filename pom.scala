@@ -192,16 +192,20 @@ Model(
               )
             )
           ),
-          Plugin(Plugins.deploy, configuration = Config(skip = "false"))
-//          Plugin(
-//            Plugins.nexusStaging,
-//            configuration = Config(
-//              serverId = "ossrh",
-//              nexusUrl = "https://oss.sonatype.org",
-//              autoReleaseAfterClose = "false" // TODO: set to true it tested
-//
-//            )
-//          )
+          Plugin(
+            Plugins.nexusStaging,
+            executions = Seq(
+              Execution(
+                id = "deploy-to-ossrh",
+                goals = Seq("deploy"),
+                configuration = Config(
+                  serverId = "ossrh",
+                  nexusUrl = "https://oss.sonatype.org",
+                  autoReleaseAfterClose = "true"
+                )
+              )
+            )
+          )
         )
       )
     ),
