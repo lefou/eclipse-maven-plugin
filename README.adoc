@@ -1,3 +1,5 @@
 = Eclipse Maven Plugin
 
+image:https://badges.gitter.im/lefou/eclipse-maven-plugin.svg[link="https://gitter.im/lefou/eclipse-maven-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"]
+
 A Maven Plugin to generate project files for Eclipse with M2E-Plugin
