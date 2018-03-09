@@ -30,6 +30,10 @@ public class TasksTest extends FreeSpec {
 			test("Remove the shared path prefix", () -> {
 				expectEquals(tasks.relativePath(basedir + "/target"), "target");
 			});
+			
+			test("Preserve a relative path", () -> {
+				expectEquals(tasks.relativePath("src/main/aspectj"), "src/main/aspectj");
+			});
 		});
 
 	}
