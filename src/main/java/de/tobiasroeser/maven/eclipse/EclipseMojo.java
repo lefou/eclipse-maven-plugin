@@ -8,8 +8,13 @@ import static de.tototec.utils.functional.FList.map;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.LineNumberInputStream;
+import java.io.LineNumberReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
@@ -17,8 +22,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
@@ -138,8 +145,19 @@ public class EclipseMojo extends AbstractMojo {
 	@Parameter(required = false, property = "eclipse.autodetect", defaultValue = "true")
 	private boolean autodetect = true;
 
+	/**
+	 * List of Maven profiles that should be activated in Eclipse.
+	 */
 	@Parameter(required = false, property = "eclipse.activeProfiles")
 	private List<String> activeProfiles = new LinkedList<String>();
+
+	/**
+	 * Map of settings file templates. The map entry key is the settings file
+	 * name and must be relative to the project directory. The map entry value
+	 * is the template file.
+	 */
+	@Parameter(required = false, property = "eclipse.settingsTemplates")
+	private Map<String, String> settingsTemplates = new LinkedHashMap<>();
 
 	public EclipseMojo() {
 	}
@@ -167,7 +185,7 @@ public class EclipseMojo extends AbstractMojo {
 	}
 
 	protected ProjectConfig readPomProjectConfig() {
-		 ProjectConfig projectConfig = new ProjectConfig()
+		ProjectConfig projectConfig = new ProjectConfig()
 				.withName(Optional.lift(mavenProject.getName())
 						.orElse(Optional.lift(mavenProject.getArtifactId()))
 						.getOrElse("undefined"))
@@ -177,11 +195,11 @@ public class EclipseMojo extends AbstractMojo {
 				.withResources(map(mavenProject.getBuild().getResources(), r -> r.getDirectory()))
 				.withTestResources(map(mavenProject.getBuild().getTestResources(), r -> r.getDirectory()));
 
-			final Optional<String> encoding = Optional
-					.lift(mavenProject.getProperties().getProperty("project.build.sourceEncoding"))
-					.orElse(Optional.lift("UTF-8"));
-			projectConfig = projectConfig.withEncoding(encoding);
-		 
+		final Optional<String> encoding = Optional
+				.lift(mavenProject.getProperties().getProperty("project.build.sourceEncoding"))
+				.orElse(Optional.lift("UTF-8"));
+		projectConfig = projectConfig.withEncoding(encoding);
+
 		if (defaultBuilders) {
 			// Add M2e nature and builder
 			projectConfig = projectConfig
@@ -348,24 +366,27 @@ public class EclipseMojo extends AbstractMojo {
 		}
 		getLog().debug("Final eclipse project config: " + projectConfig);
 
-		final File projectFile = new File(basedir.getPath(), ".project");
+		final File projectFile = new File(basedir, ".project");
 		generateFile(projectFile, dryrun, printStream -> {
 			tasks.generateProjectFile(printStream, projectConfig);
 		});
 
-		final File orgEclipseM2eCorePrefs = new File(basedir.getPath(), ".settings/org.eclipse.m2e.core.prefs");
-		generateFile(orgEclipseM2eCorePrefs, dryrun, printStream -> {
-			tasks.generateSettingOrgEclipseM2eCorePrefs(printStream, activeProfiles);
-		});
+		final String orgEclipseM2eCorePrefs = ".settings/org.eclipse.m2e.core.prefs";
+		if (!settingsTemplates.containsKey(orgEclipseM2eCorePrefs)) {
+			generateFile(new File(basedir, orgEclipseM2eCorePrefs), dryrun, printStream -> {
+				tasks.generateSettingOrgEclipseM2eCorePrefs(printStream, activeProfiles);
+			});
+		}
 
-		final File orgEclipseCoreResourcesPrefs = new File(basedir.getPath(),
-				".settings/org.eclipse.core.resources.prefs");
-		generateFile(orgEclipseCoreResourcesPrefs, dryrun, printStream -> {
-			tasks.generateSettingOrgEclipseCoreResourcesPrefs(printStream, projectConfig);
-		});
+		final String orgEclipseCoreResourcesPrefs = ".settings/org.eclipse.core.resources.prefs";
+		if (!settingsTemplates.containsKey(orgEclipseCoreResourcesPrefs)) {
+			generateFile(new File(basedir, orgEclipseCoreResourcesPrefs), dryrun, printStream -> {
+				tasks.generateSettingOrgEclipseCoreResourcesPrefs(printStream, projectConfig);
+			});
+		}
 
 		if (!"pom".equals(packaging)) {
-			final File classpathFile = new File(basedir.getPath(), ".classpath");
+			final File classpathFile = new File(basedir, ".classpath");
 			generateFile(classpathFile, dryrun, printStream -> {
 				tasks.generateClasspathFileContent(
 						printStream, projectConfig,
@@ -374,11 +395,44 @@ public class EclipseMojo extends AbstractMojo {
 						sourcesOptional);
 			});
 
-			final File orgEclipseJdtCorePrefs = new File(basedir.getPath(), ".settings/org.eclipse.jdt.core.prefs");
-			generateFile(orgEclipseJdtCorePrefs, dryrun, printStream -> {
-				tasks.generateSettingOrgEclipseJdtCorePrefs(printStream, projectConfig.getJavaVersion());
-			});
+			final String orgEclipseJdtCorePrefs = ".settings/org.eclipse.jdt.core.prefs";
+			if (!settingsTemplates.containsKey(orgEclipseJdtCorePrefs)) {
+				generateFile(new File(basedir, orgEclipseJdtCorePrefs), dryrun, printStream -> {
+					tasks.generateSettingOrgEclipseJdtCorePrefs(printStream, projectConfig.getJavaVersion());
+				});
+			}
+		}
 
+		try {
+			foreach(settingsTemplates.entrySet(), entry -> {
+				final String fileName = entry.getKey();
+				final File templateFile = Optional.some(new File(entry.getValue()))
+						.map(f -> f.isAbsolute() ? f : new File(basedir, f.getPath())).get();
+				getLog().debug("Processing template file: " + templateFile);
+				// we need to wrap the exception because our foreach-loop
+				// cannot handle checked exceptions
+				try (FileReader in = new FileReader(templateFile);
+						LineNumberReader lnr = new LineNumberReader(in);) {
+					generateFile(new File(basedir, fileName), dryrun, printStream -> {
+						try {
+							printStream.println(lnr.readLine());
+						} catch (final IOException e) {
+							throw new RuntimeException("WRAP",
+									new MojoExecutionException("Could not rea template file " + templateFile));
+						}
+					});
+				} catch (final MojoExecutionException e) {
+					throw new RuntimeException("WRAP", e);
+				} catch (final IOException e) {
+					throw new RuntimeException("WRAP", new MojoExecutionException("Cannot load template file " + templateFile));
+				}
+			});
+		} catch (final RuntimeException e) {
+			if (e.getCause() instanceof MojoExecutionException) {
+				throw (MojoExecutionException) e.getCause();
+			} else {
+				throw e;
+			}
 		}
 	}
 
@@ -393,14 +447,14 @@ public class EclipseMojo extends AbstractMojo {
 			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
 			onEnd.add(() -> {
 				final String fileContent = new String(bout.toByteArray(), charset);
-				getLog().info("(dryrun) I would generate: " + file +
-						" with content:\n" + fileContent);
+				getLog().info("(dryrun) I would generate: " + file + " with content:\n" + fileContent);
 			});
 			out = bout;
 		} else {
 			if (file.exists()) {
 				getLog().info("Overwriting existing file: " + file);
 			} else {
+				getLog().debug("Writing file: " + file);
 				if (file.getParentFile() != null && !file.getParentFile().exists()) {
 					// ensure, dir exists
 					file.getParentFile().mkdirs();
