@@ -138,6 +138,9 @@ public class EclipseMojo extends AbstractMojo {
 	@Parameter(required = false, property = "eclipse.autodetect", defaultValue = "true")
 	private boolean autodetect = true;
 
+	@Parameter(required = false, property = "eclipse.activeProfiles")
+	private List<String> activeProfiles = new LinkedList<String>();
+
 	public EclipseMojo() {
 	}
 
@@ -164,7 +167,7 @@ public class EclipseMojo extends AbstractMojo {
 	}
 
 	protected ProjectConfig readPomProjectConfig() {
-		ProjectConfig projectConfig = new ProjectConfig()
+		 ProjectConfig projectConfig = new ProjectConfig()
 				.withName(Optional.lift(mavenProject.getName())
 						.orElse(Optional.lift(mavenProject.getArtifactId()))
 						.getOrElse("undefined"))
@@ -174,6 +177,11 @@ public class EclipseMojo extends AbstractMojo {
 				.withResources(map(mavenProject.getBuild().getResources(), r -> r.getDirectory()))
 				.withTestResources(map(mavenProject.getBuild().getTestResources(), r -> r.getDirectory()));
 
+			final Optional<String> encoding = Optional
+					.lift(mavenProject.getProperties().getProperty("project.build.sourceEncoding"))
+					.orElse(Optional.lift("UTF-8"));
+			projectConfig = projectConfig.withEncoding(encoding);
+		 
 		if (defaultBuilders) {
 			// Add M2e nature and builder
 			projectConfig = projectConfig
@@ -345,6 +353,17 @@ public class EclipseMojo extends AbstractMojo {
 			tasks.generateProjectFile(printStream, projectConfig);
 		});
 
+		final File orgEclipseM2eCorePrefs = new File(basedir.getPath(), ".settings/org.eclipse.m2e.core.prefs");
+		generateFile(orgEclipseM2eCorePrefs, dryrun, printStream -> {
+			tasks.generateSettingOrgEclipseM2eCorePrefs(printStream, activeProfiles);
+		});
+
+		final File orgEclipseCoreResourcesPrefs = new File(basedir.getPath(),
+				".settings/org.eclipse.core.resources.prefs");
+		generateFile(orgEclipseCoreResourcesPrefs, dryrun, printStream -> {
+			tasks.generateSettingOrgEclipseCoreResourcesPrefs(printStream, projectConfig);
+		});
+
 		if (!"pom".equals(packaging)) {
 			final File classpathFile = new File(basedir.getPath(), ".classpath");
 			generateFile(classpathFile, dryrun, printStream -> {
@@ -354,6 +373,12 @@ public class EclipseMojo extends AbstractMojo {
 						outputDirectory, testOutputDirectory,
 						sourcesOptional);
 			});
+
+			final File orgEclipseJdtCorePrefs = new File(basedir.getPath(), ".settings/org.eclipse.jdt.core.prefs");
+			generateFile(orgEclipseJdtCorePrefs, dryrun, printStream -> {
+				tasks.generateSettingOrgEclipseJdtCorePrefs(printStream, projectConfig.getJavaVersion());
+			});
+
 		}
 	}
 
@@ -375,6 +400,11 @@ public class EclipseMojo extends AbstractMojo {
 		} else {
 			if (file.exists()) {
 				getLog().info("Overwriting existing file: " + file);
+			} else {
+				if (file.getParentFile() != null && !file.getParentFile().exists()) {
+					// ensure, dir exists
+					file.getParentFile().mkdirs();
+				}
 			}
 			try {
 				out = new FileOutputStream(file);

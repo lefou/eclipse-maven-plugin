@@ -1,10 +1,14 @@
 package de.tobiasroeser.maven.eclipse;
 
+import static de.tototec.utils.functional.FList.flatten;
 import static de.tototec.utils.functional.FList.foreach;
+import static de.tototec.utils.functional.FList.mkString;
 
 import java.io.File;
 import java.io.PrintStream;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
 
 import de.tototec.utils.functional.Optional;
 
@@ -52,9 +56,9 @@ public class Tasks {
 
 	public String relativePath(final String file) {
 		final String relPath;
-		if(new File(file).isAbsolute()) {
-		final URI basePath = basedir.toURI();
-		relPath = basePath.relativize(new File(file).toURI()).getPath();
+		if (new File(file).isAbsolute()) {
+			final URI basePath = basedir.toURI();
+			relPath = basePath.relativize(new File(file).toURI()).getPath();
 		} else {
 			relPath = file;
 		}
@@ -145,6 +149,39 @@ public class Tasks {
 		printStream.println("\t\t\t<attribute name=\"maven.pomderived\" value=\"true\"/>");
 		printStream.println("\t\t</attributes>");
 		printStream.println("\t</classpathentry>");
+	}
+
+	public void generateSettingOrgEclipseJdtCorePrefs(final PrintStream printStream,
+			final Optional<String> javaVersion) {
+		printStream.println("eclipse.preferences.version=1");
+		javaVersion.foreach(v -> {
+			printStream.println("org.eclipse.jdt.core.compiler.codegen.targetPlatform=" + v);
+			printStream.println("org.eclipse.jdt.core.compiler.compliance=" + v);
+			printStream.println("org.eclipse.jdt.core.compiler.source=" + v);
+		});
+	}
+
+	public void generateSettingOrgEclipseM2eCorePrefs(final PrintStream printStream,
+			final List<String> activeProfiles) {
+		printStream.println("activeProfiles=" + mkString(activeProfiles, ","));
+		printStream.println("eclipse.preferences.version=1");
+		printStream.println("resolveWorkspaceProjects=true");
+		printStream.println("version=1");
+	}
+
+	public void generateSettingOrgEclipseCoreResourcesPrefs(final PrintStream printStream,
+			final ProjectConfig projectConfig) {
+		printStream.println("eclipse.preferences.version=1");
+		projectConfig.getEncoding().foreach(encoding -> {
+			foreach(flatten(Arrays.asList(
+					projectConfig.getSources(),
+					projectConfig.getResources(),
+					projectConfig.getTestSources(),
+					projectConfig.getTestResources())), path -> {
+						printStream.println("encoding//" + relativePath(path) + "=" + encoding);
+					});
+			printStream.println("encoding/<project>=" + encoding);
+		});
 	}
 
 }

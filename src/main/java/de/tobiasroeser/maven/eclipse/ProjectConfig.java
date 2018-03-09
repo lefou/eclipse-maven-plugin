@@ -22,7 +22,8 @@ public class ProjectConfig {
 	private final List<String> testResources;
 	private final List<Builder> builders;
 	private final List<Nature> natures;
-	private Optional<String> javaVersion;
+	private final Optional<String> javaVersion;
+	private final Optional<String> encoding;
 
 	public ProjectConfig() {
 		this("", "",
@@ -32,7 +33,8 @@ public class ProjectConfig {
 				Collections.emptyList(),
 				Collections.emptyList(),
 				Collections.emptyList(),
-				Optional.lift(System.getProperty("java.version")).map(v -> javaVersion(v)));
+				Optional.lift(System.getProperty("java.version")).map(v -> javaVersion(v)),
+				Optional.none());
 	}
 
 	public ProjectConfig(
@@ -44,7 +46,8 @@ public class ProjectConfig {
 			final List<String> testResources,
 			final List<Builder> builders,
 			final List<Nature> natures,
-			final Optional<String> javaVersion) {
+			final Optional<String> javaVersion,
+			final Optional<String> encoding) {
 		this.name = name;
 		this.comment = comment;
 		this.sources = distinct(sources);
@@ -54,6 +57,7 @@ public class ProjectConfig {
 		this.builders = distinct(builders);
 		this.natures = distinct(natures);
 		this.javaVersion = javaVersion;
+		this.encoding = encoding;
 	}
 
 	public static String javaVersion(final String javaVersion) {
@@ -66,7 +70,7 @@ public class ProjectConfig {
 
 	public ProjectConfig withName(final String name) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion);
+				javaVersion, encoding);
 	}
 
 	public String getComment() {
@@ -75,7 +79,7 @@ public class ProjectConfig {
 
 	public ProjectConfig withComment(final String comment) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion);
+				javaVersion, encoding);
 	}
 
 	public List<String> getSources() {
@@ -84,7 +88,7 @@ public class ProjectConfig {
 
 	public ProjectConfig withSources(final List<String> sources) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion);
+				javaVersion, encoding);
 	}
 
 	public List<String> getTestSources() {
@@ -93,7 +97,7 @@ public class ProjectConfig {
 
 	public ProjectConfig withTestSources(final List<String> testSources) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion);
+				javaVersion, encoding);
 	}
 
 	public List<String> getResources() {
@@ -102,7 +106,7 @@ public class ProjectConfig {
 
 	public ProjectConfig withResources(final List<String> resources) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion);
+				javaVersion, encoding);
 	}
 
 	public List<String> getTestResources() {
@@ -111,7 +115,7 @@ public class ProjectConfig {
 
 	public ProjectConfig withTestResources(final List<String> testResources) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion);
+				javaVersion, encoding);
 	}
 
 	public List<Builder> getBuilders() {
@@ -120,7 +124,7 @@ public class ProjectConfig {
 
 	public ProjectConfig withBuilders(final List<Builder> builders) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion);
+				javaVersion, encoding);
 	}
 
 	public List<Nature> getNatures() {
@@ -129,7 +133,7 @@ public class ProjectConfig {
 
 	public ProjectConfig withNatures(final List<Nature> natures) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion);
+				javaVersion, encoding);
 	}
 
 	public Optional<String> getJavaVersion() {
@@ -138,7 +142,16 @@ public class ProjectConfig {
 
 	public ProjectConfig withJavaVersion(final Optional<String> javaVersion) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion);
+				javaVersion, encoding);
+	}
+
+	public Optional<String> getEncoding() {
+		return encoding;
+	}
+
+	public ProjectConfig withEncoding(final Optional<String> encoding) {
+		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding);
 	}
 
 	@Override
@@ -153,6 +166,7 @@ public class ProjectConfig {
 				"\n  builders: " + builders +
 				"\n  natures: " + natures +
 				"\n  javaVersion: " + javaVersion +
+				"\n  encoding: " + encoding +
 				"\n}";
 	}
 }
