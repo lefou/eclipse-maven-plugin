@@ -141,28 +141,29 @@ public class EclipseMojo extends AbstractMojo {
 	public EclipseMojo() {
 	}
 
-	public List<Builder> defaultBuilders() {
+	public List<Builder> defaultM2eBuilders() {
+		return Arrays.asList(
+				new Builder("org.eclipse.m2e.core.maven2Builder", "Default Maven Builder"));
+	}
+
+	public List<Builder> defaultJavaBuilders() {
 		return Arrays.asList(
 				new Builder("org.eclipse.jdt.core.javabuilder", "Default Java Builder"),
 				new Builder("org.eclipse.m2e.core.maven2Builder", "Default Maven Builder"));
 	}
 
-	public List<Nature> defaultNatures() {
+	public List<Nature> defaultJavaNatures() {
 		return Arrays.asList(
 				new Nature("org.eclipse.jdt.core.javanature", "Default Java Nature"),
 				new Nature("org.eclipse.m2e.core.maven2Nature", "Default Maven Nature"));
 	}
 
-	protected ProjectConfig readProjectConfig() {
+	public List<Nature> defaultM2eNatures() {
+		return Arrays.asList(
+				new Nature("org.eclipse.m2e.core.maven2Nature", "Default Maven Nature"));
+	}
 
-		final List<Builder> defBuilders = !defaultBuilders ? Collections.emptyList() : defaultBuilders();
-		final List<Nature> defNatures = !defaultNatures ? Collections.emptyList() : defaultNatures();
-
-		final List<Builder> autodetectBuilders = !autodetect ? Collections.emptyList() : autodetectableBuilders();
-		final List<Nature> autodetectNatures = !autodetect ? Collections.emptyList() : autodetectableNatures();
-
-		// initial config from pom
-
+	protected ProjectConfig readPomProjectConfig() {
 		ProjectConfig projectConfig = new ProjectConfig()
 				.withName(Optional.lift(mavenProject.getName())
 						.orElse(Optional.lift(mavenProject.getArtifactId()))
@@ -171,13 +172,36 @@ public class EclipseMojo extends AbstractMojo {
 				.withSources(mavenProject.getCompileSourceRoots())
 				.withTestSources(mavenProject.getTestCompileSourceRoots())
 				.withResources(map(mavenProject.getBuild().getResources(), r -> r.getDirectory()))
-				.withTestResources(map(mavenProject.getBuild().getTestResources(), r -> r.getDirectory()))
-				.withBuilders(defBuilders)
-				.withNatures(defNatures);
+				.withTestResources(map(mavenProject.getBuild().getTestResources(), r -> r.getDirectory()));
 
-		final String javaVersion = Optional.lift(mavenProject.getProperties().getProperty("maven.compiler.source"))
+		if (defaultBuilders) {
+			// Add M2e nature and builder
+			projectConfig = projectConfig
+					.withBuilders(concat(projectConfig.getBuilders(), defaultM2eBuilders()))
+					.withNatures(concat(projectConfig.getNatures(), defaultM2eNatures()));
+		}
+		return projectConfig;
+	}
+
+	protected ProjectConfig readFullProjectConfig() {
+
+		final List<Builder> autodetectBuilders = !autodetect ? Collections.emptyList() : autodetectableBuilders();
+		final List<Nature> autodetectNatures = !autodetect ? Collections.emptyList() : autodetectableNatures();
+
+		// initial config from pom
+
+		ProjectConfig projectConfig = readPomProjectConfig();
+
+		if (defaultBuilders) {
+			projectConfig = projectConfig
+					.withBuilders(concat(projectConfig.getBuilders(), defaultJavaBuilders()))
+					.withNatures(concat(projectConfig.getNatures(), defaultJavaNatures()));
+		}
+
+		final Optional<String> javaVersion = Optional
+				.lift(mavenProject.getProperties().getProperty("maven.compiler.source"))
 				.orElse(Optional.lift(mavenProject.getProperties().getProperty("maven.compiler.target")))
-				.getOrElse(projectConfig.getJavaVersion());
+				.orElse(projectConfig.getJavaVersion());
 		projectConfig = projectConfig.withJavaVersion(javaVersion);
 
 		final List<Plugin> plugins = mavenProject.getBuild().getPlugins();
@@ -253,7 +277,7 @@ public class EclipseMojo extends AbstractMojo {
 		}
 
 		// enhance with config values
-		return projectConfig
+		projectConfig = projectConfig
 				.withSources(concat(projectConfig.getSources(), extraSources))
 				.withResources(concat(projectConfig.getResources(), extraResources))
 				.withTestSources(concat(projectConfig.getTestSources(), extraTestSources))
@@ -262,6 +286,7 @@ public class EclipseMojo extends AbstractMojo {
 						map(extraBuilders, b -> new Builder(b, "Explicit Builder from pom"))))
 				.withNatures(concat(projectConfig.getNatures(),
 						map(extraNatures, n -> new Nature(n, "Explicit Nature from pom"))));
+		return projectConfig;
 	}
 
 	protected List<Nature> autodetectableNatures() {
@@ -302,25 +327,34 @@ public class EclipseMojo extends AbstractMojo {
 			return;
 		}
 
-		final ProjectConfig projectConfig = readProjectConfig();
-		getLog().debug("Final eclipse project config: " + projectConfig);
-
 		final File basedir = mavenProject.getBasedir();
 		final Tasks tasks = new Tasks(basedir);
+
+		final String packaging = mavenProject.getPackaging();
+
+		final ProjectConfig projectConfig;
+		if ("pom".equals(packaging)) {
+			projectConfig = readPomProjectConfig();
+		} else {
+			projectConfig = readFullProjectConfig();
+		}
+		getLog().debug("Final eclipse project config: " + projectConfig);
 
 		final File projectFile = new File(basedir.getPath(), ".project");
 		generateFile(projectFile, dryrun, printStream -> {
 			tasks.generateProjectFile(printStream, projectConfig);
 		});
 
-		final File classpathFile = new File(basedir.getPath(), ".classpath");
-		generateFile(classpathFile, dryrun, printStream -> {
-			tasks.generateClasspathFileContent(
-					printStream, projectConfig,
-					Optional.lift(alternativeOutput),
-					outputDirectory, testOutputDirectory,
-					sourcesOptional);
-		});
+		if (!"pom".equals(packaging)) {
+			final File classpathFile = new File(basedir.getPath(), ".classpath");
+			generateFile(classpathFile, dryrun, printStream -> {
+				tasks.generateClasspathFileContent(
+						printStream, projectConfig,
+						Optional.lift(alternativeOutput),
+						outputDirectory, testOutputDirectory,
+						sourcesOptional);
+			});
+		}
 	}
 
 	protected void generateFile(final File file, final boolean dryrun, final Procedure1<PrintStream> generator)

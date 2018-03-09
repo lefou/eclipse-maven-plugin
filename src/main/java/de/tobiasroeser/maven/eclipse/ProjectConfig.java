@@ -1,10 +1,13 @@
 package de.tobiasroeser.maven.eclipse;
 
+import static de.tototec.utils.functional.FList.distinct;
 import static de.tototec.utils.functional.FList.mkString;
 import static de.tototec.utils.functional.FList.take;
 
 import java.util.Collections;
 import java.util.List;
+
+import de.tototec.utils.functional.Optional;
 
 /**
  * Project configuration data used to generate Eclipse project files.
@@ -19,7 +22,7 @@ public class ProjectConfig {
 	private final List<String> testResources;
 	private final List<Builder> builders;
 	private final List<Nature> natures;
-	private String javaVersion;
+	private Optional<String> javaVersion;
 
 	public ProjectConfig() {
 		this("", "",
@@ -29,7 +32,7 @@ public class ProjectConfig {
 				Collections.emptyList(),
 				Collections.emptyList(),
 				Collections.emptyList(),
-				javaVersion(System.getProperty("java.version")));
+				Optional.lift(System.getProperty("java.version")).map(v -> javaVersion(v)));
 	}
 
 	public ProjectConfig(
@@ -41,15 +44,15 @@ public class ProjectConfig {
 			final List<String> testResources,
 			final List<Builder> builders,
 			final List<Nature> natures,
-			final String javaVersion) {
+			final Optional<String> javaVersion) {
 		this.name = name;
 		this.comment = comment;
-		this.sources = sources;
-		this.testSources = testSources;
-		this.resources = resources;
-		this.testResources = testResources;
-		this.builders = builders;
-		this.natures = natures;
+		this.sources = distinct(sources);
+		this.testSources = distinct(testSources);
+		this.resources = distinct(resources);
+		this.testResources = distinct(testResources);
+		this.builders = distinct(builders);
+		this.natures = distinct(natures);
 		this.javaVersion = javaVersion;
 	}
 
@@ -129,11 +132,11 @@ public class ProjectConfig {
 				javaVersion);
 	}
 
-	public String getJavaVersion() {
+	public Optional<String> getJavaVersion() {
 		return javaVersion;
 	}
 
-	public ProjectConfig withJavaVersion(final String javaVersion) {
+	public ProjectConfig withJavaVersion(final Optional<String> javaVersion) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
 				javaVersion);
 	}
@@ -149,6 +152,7 @@ public class ProjectConfig {
 				"\n  testResources: " + testResources +
 				"\n  builders: " + builders +
 				"\n  natures: " + natures +
+				"\n  javaVersion: " + javaVersion +
 				"\n}";
 	}
 }

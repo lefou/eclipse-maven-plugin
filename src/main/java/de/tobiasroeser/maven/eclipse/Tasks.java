@@ -99,16 +99,17 @@ public class Tasks {
 						sourcesOptional));
 
 		// con
-		final String javaVersion = projectConfig.getJavaVersion();
-		final String jrePrefix = "org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/";
-		final String jreSuffix;
-		if ("1.5".equals(javaVersion) || "1.4".equals(javaVersion)) {
-			jreSuffix = "J2SE-" + javaVersion;
-		} else {
-			jreSuffix = "JavaSE-" + javaVersion;
-		}
+		projectConfig.getJavaVersion().foreach(javaVersion -> {
+			final String jrePrefix = "org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/";
+			final String jreSuffix;
+			if ("1.5".equals(javaVersion) || "1.4".equals(javaVersion)) {
+				jreSuffix = "J2SE-" + javaVersion;
+			} else {
+				jreSuffix = "JavaSE-" + javaVersion;
+			}
 
-		generateClasspathEntry(printStream, "con", jrePrefix + jreSuffix, Optional.none(), false);
+			generateClasspathEntry(printStream, "con", jrePrefix + jreSuffix, Optional.none(), false);
+		});
 
 		generateClasspathEntry(printStream, "con", "org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER", Optional.none(),
 				false);
@@ -126,7 +127,15 @@ public class Tasks {
 			final String path,
 			final Optional<String> outputPath,
 			final boolean optional) {
-		printStream.print("\t<classpathentry kind=\"" + kind + "\" path=\"" + relativePath(path) + "\"");
+
+		String normalizedPath;
+		if ("src".equals(kind)) {
+			normalizedPath = relativePath(path);
+		} else {
+			normalizedPath = path;
+		}
+
+		printStream.print("\t<classpathentry kind=\"" + kind + "\" path=\"" + normalizedPath + "\"");
 		outputPath.foreach(p -> printStream.print(" output=\"" + relativePath(p) + "\""));
 		printStream.println(">");
 		printStream.println("\t\t<attributes>");
