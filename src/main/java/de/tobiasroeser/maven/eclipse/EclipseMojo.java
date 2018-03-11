@@ -8,12 +8,10 @@ import static de.tototec.utils.functional.FList.map;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.LineNumberInputStream;
 import java.io.LineNumberReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -152,12 +150,19 @@ public class EclipseMojo extends AbstractMojo {
 	private List<String> activeProfiles = new LinkedList<String>();
 
 	/**
-	 * Map of settings file templates. The map entry key is the settings file
-	 * name and must be relative to the project directory. The map entry value
-	 * is the template file.
+	 * Map of settings file templates, which will be placed in the '.settings'
+	 * directory. The map entry key is the settings file name. The map entry
+	 * value is the template file.
 	 */
 	@Parameter(required = false, property = "eclipse.settingsTemplates")
 	private Map<String, String> settingsTemplates = new LinkedHashMap<>();
+
+	/**
+	 * A directory containing files, which should be placed into the '.settings'
+	 * directory.
+	 */
+	@Parameter(required = false, property = "eclipse.settingsTemplatesDir")
+	private File settingsTemplatesDir;
 
 	public EclipseMojo() {
 	}
@@ -364,6 +369,18 @@ public class EclipseMojo extends AbstractMojo {
 		} else {
 			projectConfig = readFullProjectConfig();
 		}
+
+		// Reading/checking templates
+		final Map<String, String> templates = new LinkedHashMap<>();
+		// First, add templates from template dir
+		if (settingsTemplatesDir != null && settingsTemplatesDir.exists()) {
+			final File[] files = Optional.lift(settingsTemplatesDir.listFiles()).getOrElse(new File[0]);
+			foreach(
+					filter(files, f -> f.isFile()),
+					f -> templates.put(f.getName(), f.getAbsolutePath()));
+		}
+		templates.putAll(settingsTemplates);
+
 		getLog().debug("Final eclipse project config: " + projectConfig);
 
 		final File projectFile = new File(basedir, ".project");
@@ -371,16 +388,16 @@ public class EclipseMojo extends AbstractMojo {
 			tasks.generateProjectFile(printStream, projectConfig);
 		});
 
-		final String orgEclipseM2eCorePrefs = ".settings/org.eclipse.m2e.core.prefs";
-		if (!settingsTemplates.containsKey(orgEclipseM2eCorePrefs)) {
-			generateFile(new File(basedir, orgEclipseM2eCorePrefs), dryrun, printStream -> {
+		final String orgEclipseM2eCorePrefs = "org.eclipse.m2e.core.prefs";
+		if (!templates.containsKey(orgEclipseM2eCorePrefs)) {
+			generateFile(new File(basedir, ".settings/" + orgEclipseM2eCorePrefs), dryrun, printStream -> {
 				tasks.generateSettingOrgEclipseM2eCorePrefs(printStream, activeProfiles);
 			});
 		}
 
-		final String orgEclipseCoreResourcesPrefs = ".settings/org.eclipse.core.resources.prefs";
-		if (!settingsTemplates.containsKey(orgEclipseCoreResourcesPrefs)) {
-			generateFile(new File(basedir, orgEclipseCoreResourcesPrefs), dryrun, printStream -> {
+		final String orgEclipseCoreResourcesPrefs = "org.eclipse.core.resources.prefs";
+		if (!templates.containsKey(orgEclipseCoreResourcesPrefs)) {
+			generateFile(new File(basedir, ".settings/" + orgEclipseCoreResourcesPrefs), dryrun, printStream -> {
 				tasks.generateSettingOrgEclipseCoreResourcesPrefs(printStream, projectConfig);
 			});
 		}
@@ -395,39 +412,42 @@ public class EclipseMojo extends AbstractMojo {
 						sourcesOptional);
 			});
 
-			final String orgEclipseJdtCorePrefs = ".settings/org.eclipse.jdt.core.prefs";
-			if (!settingsTemplates.containsKey(orgEclipseJdtCorePrefs)) {
-				generateFile(new File(basedir, orgEclipseJdtCorePrefs), dryrun, printStream -> {
+			final String orgEclipseJdtCorePrefs = "org.eclipse.jdt.core.prefs";
+			if (!templates.containsKey(orgEclipseJdtCorePrefs)) {
+				generateFile(new File(basedir, ".settings/" + orgEclipseJdtCorePrefs), dryrun, printStream -> {
 					tasks.generateSettingOrgEclipseJdtCorePrefs(printStream, projectConfig.getJavaVersion());
 				});
 			}
 		}
 
 		try {
-			foreach(settingsTemplates.entrySet(), entry -> {
-				final String fileName = entry.getKey();
+			foreach(templates.entrySet(), entry -> {
+				final String fileName = ".settings/" + entry.getKey();
 				final File templateFile = Optional.some(new File(entry.getValue()))
 						.map(f -> f.isAbsolute() ? f : new File(basedir, f.getPath())).get();
 				getLog().debug("Processing template file: " + templateFile);
 				// we need to wrap the exception because our foreach-loop
 				// cannot handle checked exceptions
-				try (FileReader in = new FileReader(templateFile);
-						LineNumberReader lnr = new LineNumberReader(in);) {
+				try {
 					generateFile(new File(basedir, fileName), dryrun, printStream -> {
-						try {
-							printStream.println(lnr.readLine());
+						try (FileReader in = new FileReader(templateFile);
+								LineNumberReader lnr = new LineNumberReader(in);) {
+							String line;
+							while ((line = lnr.readLine()) != null) {
+								printStream.println(line);
+							}
 						} catch (final IOException e) {
 							throw new RuntimeException("WRAP",
-									new MojoExecutionException("Could not rea template file " + templateFile));
+									new MojoExecutionException("Could not read template file " + templateFile));
 						}
 					});
 				} catch (final MojoExecutionException e) {
 					throw new RuntimeException("WRAP", e);
-				} catch (final IOException e) {
-					throw new RuntimeException("WRAP", new MojoExecutionException("Cannot load template file " + templateFile));
 				}
 			});
-		} catch (final RuntimeException e) {
+		} catch (
+
+		final RuntimeException e) {
 			if (e.getCause() instanceof MojoExecutionException) {
 				throw (MojoExecutionException) e.getCause();
 			} else {
