@@ -2,7 +2,7 @@ import org.sonatype.maven.polyglot.scala.model._
 import scala.collection.immutable._
 
 val projectName = "eclipse-maven-plugin"
-val gav = "de.tototec" % s"de.tobiasroeser.${projectName}" % "0.0.2-SNAPSHOT"
+val gav = "de.tototec" % s"de.tobiasroeser.${projectName}" % "0.0.2"
 val url = "https://github.com/lefou/eclipse-maven-plugin"
 
 implicit class RichDependency(d: Dependency) {
@@ -79,6 +79,15 @@ Model(
     Developer(name = "Tobias Roeser", email = "le.petit.fou@web.de")
   ),
   build = Build(
+    resources = Seq(
+      Resource(
+        directory = "src/main/resources"
+      ),
+      Resource(
+        directory = ".",
+        includes = Seq("README.adoc", "LICENSE.txt")
+      )
+    ),
     plugins = Seq(
       Plugin(gav = Plugins.plugin,
         executions = Seq(

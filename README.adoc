@@ -1,10 +1,74 @@
 = Eclipse Maven Plugin
+:release-version: 0.0.2
+// :site-url: https://lefou.github.io/eclipse-maven-plugin/latest/
+:site-url: https://lefou.github.io/eclipse-maven-plugin/{release-version}/
 
 image:https://badges.gitter.im/lefou/eclipse-maven-plugin.svg[link="https://gitter.im/lefou/eclipse-maven-plugin]
 
 A Maven Plugin to generate project files for Eclipse with M2E-Plugin
 
+== Overview
+
+== Download
+
+You can download `eclipse-maven-plugin` from from http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22de.tototec%22%20AND%20a%3A%22de.tobiasroeser.eclipse-maven-plugin%22[Maven Central]:
+
+
+[source,xml,subs="attributes,verbatim"]
+----
+<dependency>
+  <groupId>de.tototec</groupId>
+  <artifactId>de.tobiasroeser.eclipse-maven-plugin</artifactId>
+  <version>{release-version}</version>
+  <type>maven-plugin</type>
+</dependency>
+----
+
+== Usage
+
+
+[source,xml,subs="attributes,verbatim"]
+----
+<project>
+  ...
+  <build>
+    <!-- To define the plugin version in your parent POM -->
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>de.tototec</groupId>
+          <artifactId>de.tobiasroeser.eclipse-maven-plugin</artifactId>
+          <version>{release-version}</version>
+        </plugin>
+        ...
+      </plugins>
+    </pluginManagement>
+    <!-- To use the plugin goals in your POM or parent POM -->
+    <plugins>
+      <plugin>
+        <groupId>de.tototec</groupId>
+        <artifactId>de.tobiasroeser.eclipse-maven-plugin</artifactId>
+        <version>{release-version}</version>
+      </plugin>
+      ...
+    </plugins>
+  </build>
+  ...
+</project>
+----
+
+For more information refer the https://lefou.github.io/eclipse-maven-plugin/{release-version}/[plugin documentation site].
+
 == Changelog
+
+=== eclipse-maven-plugin 0.0.2 - 2018-03-12
+
+* Added generator for some settings files:
+** `org.eclipse.jdt.core.prefs`
+** `org.eclipse.core.resources.prefs`
+** `org.eclipse.m2e.core.prefs`
+* Added options to supply additional settings files (`settingsTemplates`, `settingsTemplatesDir`)
+
 
 === eclipse-maven-plugin 0.0.1 - 2018-03-08
 
