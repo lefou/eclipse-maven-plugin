@@ -10,17 +10,18 @@ object ReleaseProfile {
 
   val mvnDeploySettingsFile = "mvn-deploy-settings.xml"
 
-  val mvnDeploySettings = """<settings>
-			<servers>
-			<server>
-			<id>ossrh</id>
-			<!-- Enter your credentials here -->
-			<username>your-username</username>
-			<password>your-password</password>
-			</server>
-			</servers>
-			</settings>
-			"""
+  val mvnDeploySettings =
+    """|<settings>
+       |  <servers>
+       |    <server>
+       |      <id>ossrh</id>
+       |      <!-- Enter your credentials here -->
+       |      <username>your-username</username>
+       |      <password>your-password</password>
+       |    </server>
+       |  </servers>
+       |</settings>
+       |""".stripMargin
 
   def echoMvnDeploySettings: Config = new Config(
     mvnDeploySettings.split("[\n]").toList.map { line =>
