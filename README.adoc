@@ -1,5 +1,5 @@
 = Eclipse Maven Plugin
-:release-version: 0.0.2
+:release-version: 0.0.3
 // :site-url: https://lefou.github.io/eclipse-maven-plugin/latest/
 :site-url: https://lefou.github.io/eclipse-maven-plugin/{release-version}/
 
@@ -62,6 +62,8 @@ For more information refer the https://lefou.github.io/eclipse-maven-plugin/{rel
 == Changelog
 
 === eclipse-maven-plugin {master}
+
+=== eclipse-maven-plugin 0.0.3 - 2018-03-12
 
 * Added Eclipse M2E lifecycle mapping configuration
 
