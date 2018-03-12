@@ -61,6 +61,10 @@ For more information refer the https://lefou.github.io/eclipse-maven-plugin/{rel
 
 == Changelog
 
+=== eclipse-maven-plugin {master}
+
+* Added Eclipse M2E lifecycle mapping configuration
+
 === eclipse-maven-plugin 0.0.2 - 2018-03-12
 
 * Added generator for some settings files:
