@@ -40,9 +40,21 @@ import de.tototec.utils.functional.Procedure1;
 
 /**
  * Generates Eclipse project files from the current Maven project.
+ * The typical files are:
+ * <ul>
+ * <li><code>.project</code>
+ * <li><code>.classpath</code>
+ * <li><code>.settings/org.eclipse.m2e.core.prefs</code>
+ * <li><code>.settings/org.eclipse.core.resources.prefs</code>
+ * <li><code>.settings/org.eclipse.jdt.core.prefs</code>
+ * </ul>
  */
 @Mojo(name = "eclipse", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
 public class EclipseMojo extends AbstractMojo {
+
+	private static final String ORG_ECLIPSE_JDT_CORE_PREFS = "org.eclipse.jdt.core.prefs";
+	private static final String ORG_ECLIPSE_CORE_RESOURCES_PREFS = "org.eclipse.core.resources.prefs";
+	private static final String ORG_ECLIPSE_M2E_CORE_PREFS = "org.eclipse.m2e.core.prefs";
 
 	@Parameter(defaultValue = "${project}", readonly = true, required = true)
 	private MavenProject mavenProject;
@@ -152,14 +164,17 @@ public class EclipseMojo extends AbstractMojo {
 	/**
 	 * Map of settings file templates, which will be placed in the '.settings'
 	 * directory. The map entry key is the settings file name. The map entry
-	 * value is the template file.
+	 * value is the template file. Settings files listed here will be used as
+	 * is, even if this plugin would otherwise generate them based on the maven
+	 * setup.
 	 */
 	@Parameter(required = false, property = "eclipse.settingsTemplates")
 	private Map<String, String> settingsTemplates = new LinkedHashMap<>();
 
 	/**
 	 * A directory containing files, which should be placed into the '.settings'
-	 * directory.
+	 * directory. This works almost like {@link #settingsTemplates}, but
+	 * auto-scans the directory.
 	 */
 	@Parameter(required = false, property = "eclipse.settingsTemplatesDir")
 	private File settingsTemplatesDir;
@@ -388,16 +403,14 @@ public class EclipseMojo extends AbstractMojo {
 			tasks.generateProjectFile(printStream, projectConfig);
 		});
 
-		final String orgEclipseM2eCorePrefs = "org.eclipse.m2e.core.prefs";
-		if (!templates.containsKey(orgEclipseM2eCorePrefs)) {
-			generateFile(new File(basedir, ".settings/" + orgEclipseM2eCorePrefs), dryrun, printStream -> {
+		if (!templates.containsKey(ORG_ECLIPSE_M2E_CORE_PREFS)) {
+			generateFile(new File(basedir, ".settings/" + ORG_ECLIPSE_M2E_CORE_PREFS), dryrun, printStream -> {
 				tasks.generateSettingOrgEclipseM2eCorePrefs(printStream, activeProfiles);
 			});
 		}
 
-		final String orgEclipseCoreResourcesPrefs = "org.eclipse.core.resources.prefs";
-		if (!templates.containsKey(orgEclipseCoreResourcesPrefs)) {
-			generateFile(new File(basedir, ".settings/" + orgEclipseCoreResourcesPrefs), dryrun, printStream -> {
+		if (!templates.containsKey(ORG_ECLIPSE_CORE_RESOURCES_PREFS)) {
+			generateFile(new File(basedir, ".settings/" + ORG_ECLIPSE_CORE_RESOURCES_PREFS), dryrun, printStream -> {
 				tasks.generateSettingOrgEclipseCoreResourcesPrefs(printStream, projectConfig);
 			});
 		}
@@ -412,9 +425,8 @@ public class EclipseMojo extends AbstractMojo {
 						sourcesOptional);
 			});
 
-			final String orgEclipseJdtCorePrefs = "org.eclipse.jdt.core.prefs";
-			if (!templates.containsKey(orgEclipseJdtCorePrefs)) {
-				generateFile(new File(basedir, ".settings/" + orgEclipseJdtCorePrefs), dryrun, printStream -> {
+			if (!templates.containsKey(ORG_ECLIPSE_JDT_CORE_PREFS)) {
+				generateFile(new File(basedir, ".settings/" + ORG_ECLIPSE_JDT_CORE_PREFS), dryrun, printStream -> {
 					tasks.generateSettingOrgEclipseJdtCorePrefs(printStream, projectConfig.getJavaVersion());
 				});
 			}
