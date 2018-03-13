@@ -18,8 +18,8 @@ public class ProjectConfig {
 	private final String comment;
 	private final List<String> sources;
 	private final List<String> testSources;
-	private final List<String> resources;
-	private final List<String> testResources;
+	private final List<Resource> resources;
+	private final List<Resource> testResources;
 	private final List<Builder> builders;
 	private final List<Nature> natures;
 	private final Optional<String> javaVersion;
@@ -42,8 +42,8 @@ public class ProjectConfig {
 			final String comment,
 			final List<String> sources,
 			final List<String> testSources,
-			final List<String> resources,
-			final List<String> testResources,
+			final List<Resource> resources,
+			final List<Resource> testResources,
 			final List<Builder> builders,
 			final List<Nature> natures,
 			final Optional<String> javaVersion,
@@ -105,20 +105,20 @@ public class ProjectConfig {
 				javaVersion, encoding);
 	}
 
-	public List<String> getResources() {
+	public List<Resource> getResources() {
 		return resources;
 	}
 
-	public ProjectConfig withResources(final List<String> resources) {
+	public ProjectConfig withResources(final List<Resource> resources) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
 				javaVersion, encoding);
 	}
 
-	public List<String> getTestResources() {
+	public List<Resource> getTestResources() {
 		return testResources;
 	}
 
-	public ProjectConfig withTestResources(final List<String> testResources) {
+	public ProjectConfig withTestResources(final List<Resource> testResources) {
 		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
 				javaVersion, encoding);
 	}

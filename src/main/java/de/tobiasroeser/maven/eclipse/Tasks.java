@@ -2,12 +2,14 @@ package de.tobiasroeser.maven.eclipse;
 
 import static de.tototec.utils.functional.FList.flatten;
 import static de.tototec.utils.functional.FList.foreach;
+import static de.tototec.utils.functional.FList.map;
 import static de.tototec.utils.functional.FList.mkString;
 
 import java.io.File;
 import java.io.PrintStream;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import de.tototec.utils.functional.Optional;
@@ -90,17 +92,17 @@ public class Tasks {
 						whenUndefined(buildOutput, outputDirectory),
 						sourcesOptional));
 		foreach(projectConfig.getResources(),
-				s -> generateClasspathEntry(printStream, "src", s,
+				s -> generateClasspathEntry(printStream, "src", s.getPath(),
 						whenUndefined(buildOutput, outputDirectory),
-						sourcesOptional));
+						sourcesOptional, s.getIncludes(), s.getExcludes()));
 		foreach(projectConfig.getTestSources(),
 				s -> generateClasspathEntry(printStream, "src", s,
 						whenUndefined(buildOutput, testOutputDirectory),
 						sourcesOptional));
 		foreach(projectConfig.getTestResources(),
-				s -> generateClasspathEntry(printStream, "src", s,
+				s -> generateClasspathEntry(printStream, "src", s.getPath(),
 						whenUndefined(buildOutput, testOutputDirectory),
-						sourcesOptional));
+						sourcesOptional, s.getIncludes(), s.getExcludes()));
 
 		// con
 		projectConfig.getJavaVersion().foreach(javaVersion -> {
@@ -131,6 +133,18 @@ public class Tasks {
 			final String path,
 			final Optional<String> outputPath,
 			final boolean optional) {
+		generateClasspathEntry(printStream, kind, path, outputPath, optional,
+				Collections.emptyList(), Collections.emptyList());
+	}
+
+	protected void generateClasspathEntry(
+			final PrintStream printStream,
+			final String kind,
+			final String path,
+			final Optional<String> outputPath,
+			final boolean optional,
+			final List<String> includes,
+			final List<String> excludes) {
 
 		String normalizedPath;
 		if ("src".equals(kind)) {
@@ -140,6 +154,16 @@ public class Tasks {
 		}
 
 		printStream.print("\t<classpathentry kind=\"" + kind + "\" path=\"" + normalizedPath + "\"");
+		if (!includes.isEmpty()) {
+			printStream.print(" including=\"");
+			printStream.print(mkString(includes, "|"));
+			printStream.print("\"");
+		}
+		if (!excludes.isEmpty()) {
+			printStream.print(" excluding=\"");
+			printStream.print(mkString(excludes, "|"));
+			printStream.print("\"");
+		}
 		outputPath.foreach(p -> printStream.print(" output=\"" + relativePath(p) + "\""));
 		printStream.println(">");
 		printStream.println("\t\t<attributes>");
@@ -175,11 +199,10 @@ public class Tasks {
 		projectConfig.getEncoding().foreach(encoding -> {
 			foreach(flatten(Arrays.asList(
 					projectConfig.getSources(),
-					projectConfig.getResources(),
+					map(projectConfig.getResources(), r -> r.getPath()),
 					projectConfig.getTestSources(),
-					projectConfig.getTestResources())), path -> {
-						printStream.println("encoding//" + relativePath(path) + "=" + encoding);
-					});
+					map(projectConfig.getTestResources(), r -> r.getPath()))),
+					path -> printStream.println("encoding//" + relativePath(path) + "=" + encoding));
 			printStream.println("encoding/<project>=" + encoding);
 		});
 	}

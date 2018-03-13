@@ -204,6 +204,10 @@ public class EclipseMojo extends AbstractMojo {
 				new Nature("org.eclipse.m2e.core.maven2Nature", "Default Maven Nature"));
 	}
 
+	protected Resource readResource(org.apache.maven.model.Resource resource) {
+		return new Resource(resource.getDirectory(), resource.getIncludes(), resource.getExcludes());
+	}
+
 	protected ProjectConfig readPomProjectConfig() {
 		ProjectConfig projectConfig = new ProjectConfig()
 				.withName(Optional.lift(mavenProject.getName())
@@ -212,8 +216,8 @@ public class EclipseMojo extends AbstractMojo {
 				.withComment(Optional.lift(mavenProject.getDescription()).getOrElse(""))
 				.withSources(mavenProject.getCompileSourceRoots())
 				.withTestSources(mavenProject.getTestCompileSourceRoots())
-				.withResources(map(mavenProject.getBuild().getResources(), r -> r.getDirectory()))
-				.withTestResources(map(mavenProject.getBuild().getTestResources(), r -> r.getDirectory()));
+				.withResources(map(mavenProject.getBuild().getResources(), r -> readResource(r)))
+				.withTestResources(map(mavenProject.getBuild().getTestResources(), r -> readResource(r)));
 
 		final Optional<String> encoding = Optional
 				.lift(mavenProject.getProperties().getProperty("project.build.sourceEncoding"))
@@ -325,9 +329,13 @@ public class EclipseMojo extends AbstractMojo {
 		// enhance with config values
 		projectConfig = projectConfig
 				.withSources(concat(projectConfig.getSources(), extraSources))
-				.withResources(concat(projectConfig.getResources(), extraResources))
+				.withResources(
+						concat(projectConfig.getResources(),
+								map(extraResources, r -> new Resource().withPath(r))))
 				.withTestSources(concat(projectConfig.getTestSources(), extraTestSources))
-				.withTestResources(concat(projectConfig.getTestResources(), extraTestResources))
+				.withTestResources(
+						concat(projectConfig.getTestResources(),
+								map(extraTestResources, r -> new Resource().withPath(r))))
 				.withBuilders(concat(projectConfig.getBuilders(),
 						map(extraBuilders, b -> new Builder(b, "Explicit Builder from pom"))))
 				.withNatures(concat(projectConfig.getNatures(),
