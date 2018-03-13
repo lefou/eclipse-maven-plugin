@@ -41,7 +41,7 @@ public class Nature extends Tuple4<String, String, List<String>, List<String>> {
 		return getClass().getSimpleName() +
 				"(name=" + getName() +
 				",comment=" + getComment() +
-				",disablesNatrues=" + getDisablesNatures() +
+				",disablesNatures=" + getDisablesNatures() +
 				",mavenPluginKeys=" + getMavenPluginKeys() +
 				")";
 	}
