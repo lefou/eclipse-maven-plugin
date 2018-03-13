@@ -3,3 +3,8 @@ target-ide/
 /pom.xml
 mvn-deploy-settings.xml
 /gh-pages
+
+# Eclipse files
+.project
+.classpath
+.settings/
