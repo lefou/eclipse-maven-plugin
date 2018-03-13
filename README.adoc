@@ -63,6 +63,9 @@ For more information refer the https://lefou.github.io/eclipse-maven-plugin/{rel
 
 === eclipse-maven-plugin {master}
 
+* Adapted `ProjectConfig.javaVersion` to changed versioning scheme for Java 9+
+* Respect includes/excludes sections for resources
+
 === eclipse-maven-plugin 0.0.3 - 2018-03-12
 
 * Added Eclipse M2E lifecycle mapping configuration
