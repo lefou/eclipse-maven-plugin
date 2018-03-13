@@ -61,7 +61,12 @@ public class ProjectConfig {
 	}
 
 	public static String javaVersion(final String javaVersion) {
-		return mkString(take(javaVersion.split("[.]"), 2), ".");
+		String[] parts = javaVersion.split("[.]");
+		if (parts[0].startsWith("9") || parts[0].length() > 1) {
+			return parts[0];
+		} else {
+			return mkString(take(parts, 2), ".");
+		}
 	}
 
 	public String getName() {
