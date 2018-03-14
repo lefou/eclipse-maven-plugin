@@ -28,6 +28,7 @@ object Plugins {
   val clean = "org.apache.maven.plugins" % "maven-clean-plugin" % "3.0.0"
   val deploy = "org.apache.maven.plugins" % "maven-deploy-plugin" % "2.8.2"
   val gpg = "org.apache.maven.plugins" % "maven-gpg-plugin" % "1.6"
+  val invoker = "org.apache.maven.plugins" % "maven-invoker-plugin" % "3.0.1"
   val jar = "org.apache.maven.plugins" % "maven-jar-plugin" % "2.5"
   val javadoc = "org.apache.maven.plugins" % "maven-javadoc-plugin" % "3.0.0"
   val jxr = "org.apache.maven.plugins" % "maven-jxr-plugin" % "2.5"
@@ -89,18 +90,37 @@ Model(
       )
     ),
     plugins = Seq(
-      Plugin(gav = Plugins.plugin,
+      Plugin(
+        gav = Plugins.plugin,
         executions = Seq(
           Execution(id = "default-descriptor", phase = "process-classes", goals = Seq("descriptor")),
           Execution(id = "help-goal", goals = Seq("helpmojo"),
-            configuration = Config(skipErrorNoDescriptorsFound = "true")
-          )
+            configuration = Config(skipErrorNoDescriptorsFound = "true"))
         )
       ),
       // Use Asciidoctor to render site pages
       Plugin(Plugins.site, dependencies = Seq(Plugins.asciidoctor)),
       // Disable deploy plugin, we use nexus-staging in release profile
-      Plugin(Plugins.deploy, configuration = Config(skip = "true"))
+      Plugin(Plugins.deploy, configuration = Config(skip = "true")),
+      // Run integration tests
+      Plugin(
+        Plugins.invoker,
+        dependencies = Seq(
+          Deps.lambdaTest
+        ),
+        configuration = Config(
+          debug = "true",
+          settingsFile = "src/it/settings.xml",
+          localRepositoryPath = "${project.build.directory}/local-repo",
+          postBuildHookScript = "verify"
+        ),
+        executions = Seq(
+          Execution(
+            id = "integration-test",
+            goals = Seq("install", "run")
+          )
+        )
+      )
     )
   ),
   reporting = Reporting(
