@@ -15,7 +15,7 @@ object Deps {
   // we use the Java7 version here, because the maven site plugin has problems with the java8 version
   val lambdaTest = Dependency("de.tototec" % "de.tobiasroeser.lambdatest" % "0.4.0", classifier = "java7")
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.25"
-  val utilsFunctional = "de.tototec" % "de.tototec.utils.functional" % "1.0.0"
+  val utilsFunctional = "de.tototec" % "de.tototec.utils.functional" % "2.0.0"
   val logbackClassic = "ch.qos.logback" % "logback-classic" % "1.1.3"
   val mavenPluginApi = "org.apache.maven" % "maven-plugin-api" % "3.3.3"
   val mavenPluginAnnotations = "org.apache.maven.plugin-tools" % "maven-plugin-annotations" % "3.4"
