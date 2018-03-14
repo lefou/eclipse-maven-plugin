@@ -112,7 +112,8 @@ Model(
           debug = "true",
           settingsFile = "src/it/settings.xml",
           localRepositoryPath = "${project.build.directory}/local-repo",
-          postBuildHookScript = "verify"
+          postBuildHookScript = "verify",
+          goals = "generate-resources"
         ),
         executions = Seq(
           Execution(
