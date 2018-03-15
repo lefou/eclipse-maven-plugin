@@ -5,6 +5,7 @@ import static de.tototec.utils.functional.FList.exists;
 import static de.tototec.utils.functional.FList.flatten;
 import static de.tototec.utils.functional.FList.map;
 import static de.tototec.utils.functional.FList.mkString;
+import static de.tototec.utils.functional.FList.prepend;
 import static de.tototec.utils.functional.FList.take;
 
 import java.util.Arrays;
@@ -19,6 +20,7 @@ public class ScalaProjectAnalyzer implements MavenProjectAnalyzer {
 
 	public static final String ORG_SCALA_IDE_SDT_CORE_SCALABUILDER = "org.scala-ide.sdt.core.scalabuilder";
 	public static final String ORG_SCALA_IDE_SDT_CORE_SCALANATURE = "org.scala-ide.sdt.core.scalanature";
+	public static final String ORG_SCALA_IDE_SDT_LAUNCHING_SCALA_COMPILER_CONTAINER = "org.scala-ide.sdt.launching.SCALA_COMPILER_CONTAINER";
 
 	private final Log log;
 	private final boolean addingAllowed;
@@ -75,6 +77,8 @@ public class ScalaProjectAnalyzer implements MavenProjectAnalyzer {
 								map(projectConfig.getTestSources(), s -> "//" + util.relativePath(s) + "=tests"),
 								map(projectConfig.getTestResources(),
 										s -> "//" + util.relativePath(s.getPath()) + "=tests"),
+								Optional.some("P="),
+								scalaVersion.map(v -> "scala.compiler.additionalParams=\\ -Xsource\\:" + v),
 								scalaVersion.map(v -> "scala.compiler.installation=" + v),
 								scalaVersion.map(v -> "scala.compiler.sourceLevel=" + v),
 								Optional.some("scala.compiler.useProjectSettings=true"),
@@ -86,17 +90,19 @@ public class ScalaProjectAnalyzer implements MavenProjectAnalyzer {
 
 				log.debug("Adding scala nature and builder, disabling java nature and builder");
 				updated = updated
-						.withNatures(append(updated.getNatures(),
-								new Nature(ORG_SCALA_IDE_SDT_CORE_SCALANATURE, "Auto-detected from pom")))
-						.withBuilders(append(updated.getBuilders(),
-								new Builder(ORG_SCALA_IDE_SDT_CORE_SCALABUILDER, "Auto-detected from pom")))
+						.withNatures(prepend(
+								new Nature(ORG_SCALA_IDE_SDT_CORE_SCALANATURE, "Auto-detected from pom"),
+								updated.getNatures()))
+						.withBuilders(prepend(
+								new Builder(ORG_SCALA_IDE_SDT_CORE_SCALABUILDER, "Auto-detected from pom"),
+								updated.getBuilders()))
+						.withClasspathContainers(append(updated.getClasspathContainers(),
+								ORG_SCALA_IDE_SDT_LAUNCHING_SCALA_COMPILER_CONTAINER))
 						.withDisabledBuilders(append(updated.getDisabledBuilders(),
-								JavaProjectAnalyzer.ORG_ECLIPSE_JDT_CORE_JAVABUILDER));
-				updated = updated.withSettingsFiles(append(updated.getSettingsFiles(), settingsFile));
+								JavaProjectAnalyzer.ORG_ECLIPSE_JDT_CORE_JAVABUILDER))
+						.withSettingsFiles(append(updated.getSettingsFiles(), settingsFile));
 
 			}
-
-			// TODO: add scala classpath container if no scala lib is on the path
 		}
 
 		return updated;

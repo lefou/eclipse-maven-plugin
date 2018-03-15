@@ -42,8 +42,8 @@ expectEquals(
 		</buildCommand>
 	</buildSpec>
 	<natures>
-		<nature>org.eclipse.jdt.core.javanature</nature>
 		<nature>org.scala-ide.sdt.core.scalanature</nature>
+		<nature>org.eclipse.jdt.core.javanature</nature>
 		<nature>org.eclipse.m2e.core.maven2Nature</nature>
 	</natures>
 </projectDescription>"""
@@ -107,6 +107,11 @@ expectEquals(
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_COMPILER_CONTAINER">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>
@@ -157,6 +162,8 @@ expectEquals(
 //src/test/scala=tests
 //src/test/resources=tests
 //src/test/binaryResources=tests
+P=
+scala.compiler.additionalParams=\\ -Xsource\\:2.11
 scala.compiler.installation=2.11
 scala.compiler.sourceLevel=2.11
 scala.compiler.useProjectSettings=true
