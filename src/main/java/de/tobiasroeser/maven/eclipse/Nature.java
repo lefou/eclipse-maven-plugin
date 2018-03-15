@@ -1,64 +1,72 @@
 package de.tobiasroeser.maven.eclipse;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
+import de.tototec.utils.functional.Procedure1;
 
 /**
  * Configuration of an Eclipse Nature, based on information extracted from the
  * Maven pom.
  */
-public class Nature extends Tuple4<String, String, List<String>, List<String>> {
+public class Nature {
 
-	private static final long serialVersionUID = 20180307L;
+	private final String name;
+	private final String comment;
+	private final List<String> disablesNatures;
+	private final List<String> mavenPluginKeys;
+	private final Map<String, Procedure1<StringBuilder>> settingsGenerators;
+
+	public Nature(final String name, final String comment, final List<String> disablesNatures,
+			final List<String> mavenPluginKeys, Map<String, Procedure1<StringBuilder>> settingsGenerators) {
+		this.name = name;
+		this.comment = comment;
+		this.disablesNatures = Collections.unmodifiableList(new LinkedList<>(disablesNatures));
+		this.mavenPluginKeys = Collections.unmodifiableList(new LinkedList<>(mavenPluginKeys));
+		this.settingsGenerators = Collections.unmodifiableMap(new LinkedHashMap<>(settingsGenerators));
+	}
 
 	public Nature(final String name, final String comment, final List<String> disablesNatures,
 			final List<String> mavenPluginKeys) {
-		super(name, comment, disablesNatures, mavenPluginKeys);
+		this(name, comment, disablesNatures, mavenPluginKeys, Collections.emptyMap());
 	}
 
 	public Nature(final String name, final String comment) {
-		this(name, comment, Collections.emptyList(), Collections.emptyList());
+		this(name, comment, Collections.emptyList(), Collections.emptyList(), Collections.emptyMap());
 	}
 
 	public String getName() {
-		return a();
+		return name;
 	}
 
 	public String getComment() {
-		return b();
+		return comment;
 	}
 
 	public List<String> getDisablesNatures() {
-		return c();
+		return disablesNatures;
 	}
 
 	public List<String> getMavenPluginKeys() {
-		return d();
+		return mavenPluginKeys;
+	}
+
+	public Map<String, Procedure1<StringBuilder>> getSettingsGenerators() {
+		return settingsGenerators;
 	}
 
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() +
-				"(name=" + getName() +
-				",comment=" + getComment() +
-				",disablesNatures=" + getDisablesNatures() +
-				",mavenPluginKeys=" + getMavenPluginKeys() +
+				"(name=" + name +
+				",comment=" + comment +
+				",disablesNatures=" + disablesNatures +
+				",mavenPluginKeys=" + mavenPluginKeys +
+				",settingsGenerators=" + settingsGenerators +
 				")";
-	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode();
-	}
-
-	@Override
-	public boolean equals(final Object other) {
-		return (other instanceof Nature) && super.equals(other);
-	}
-
-	@Override
-	public boolean canEqual(final Object other) {
-		return other instanceof Nature;
 	}
 
 }

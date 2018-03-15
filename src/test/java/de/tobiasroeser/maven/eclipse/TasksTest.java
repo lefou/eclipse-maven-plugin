@@ -5,6 +5,7 @@ import static de.tobiasroeser.lambdatest.Expect.expectEquals;
 import java.io.File;
 
 import de.tobiasroeser.lambdatest.junit.FreeSpec;
+import de.tototec.utils.functional.Optional;
 
 public class TasksTest extends FreeSpec {
 
@@ -12,7 +13,7 @@ public class TasksTest extends FreeSpec {
 		setExpectFailFast(false);
 
 		final String basedir = "/tmp/basedir";
-		final Tasks tasks = new Tasks(new File(basedir));
+		final Tasks tasks = new Tasks(new File(basedir), Optional.none());
 
 		section("relativePath should", () -> {
 			test("Cut not a single path '/'", () -> {

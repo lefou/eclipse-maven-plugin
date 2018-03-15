@@ -1,64 +1,33 @@
 package de.tobiasroeser.maven.eclipse;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Configuration of an Eclipse Builder, based on information extracted from the
  * Maven pom.
  */
-public class Builder extends Tuple4<String, String, List<String>, List<String>> {
+public class Builder {
 
-	private static final long serialVersionUID = 20180307L;
-
-	public Builder(final String name, final String comment, final List<String> disablesBuilders,
-			final List<String> mavenPluginKeys) {
-		super(name, comment, disablesBuilders, mavenPluginKeys);
-	}
+	private final String name;
+	private final String comment;
 
 	public Builder(final String name, final String comment) {
-		this(name, comment, Collections.emptyList(), Collections.emptyList());
+		this.name = name;
+		this.comment = comment;
 	}
 
 	public String getName() {
-		return a();
+		return name;
 	}
 
 	public String getComment() {
-		return b();
-	}
-
-	public List<String> getDisablesBuilders() {
-		return c();
-	}
-
-	public List<String> getMavenPluginKeys() {
-		return d();
+		return comment;
 	}
 
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() +
-				"(name=" + getName() +
-				",comment=" + getComment() +
-				",disablesBuilder=" + getDisablesBuilders() +
-				",mavenPluginKeys=" + getMavenPluginKeys() +
+				"(name=" + name +
+				",comment=" + comment +
 				")";
-	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode();
-	}
-
-	@Override
-	public boolean equals(final Object other) {
-		return (other instanceof Builder) && super.equals(other);
-	}
-
-	@Override
-	public boolean canEqual(final Object other) {
-		return other instanceof Builder;
 	}
 
 }

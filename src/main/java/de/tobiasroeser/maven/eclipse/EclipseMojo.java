@@ -1,8 +1,8 @@
 package de.tobiasroeser.maven.eclipse;
 
 import static de.tototec.utils.functional.FList.concat;
-import static de.tototec.utils.functional.FList.exists;
 import static de.tototec.utils.functional.FList.filter;
+import static de.tototec.utils.functional.FList.foldLeft;
 import static de.tototec.utils.functional.FList.foreach;
 import static de.tototec.utils.functional.FList.map;
 
@@ -19,13 +19,11 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -34,7 +32,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
-import de.tototec.utils.functional.F1;
 import de.tototec.utils.functional.Optional;
 import de.tototec.utils.functional.Procedure1;
 
@@ -182,196 +179,19 @@ public class EclipseMojo extends AbstractMojo {
 	public EclipseMojo() {
 	}
 
-	public List<Builder> defaultM2eBuilders() {
-		return Arrays.asList(
-				new Builder("org.eclipse.m2e.core.maven2Builder", "Default Maven Builder"));
-	}
-
-	public List<Builder> defaultJavaBuilders() {
-		return Arrays.asList(
-				new Builder("org.eclipse.jdt.core.javabuilder", "Default Java Builder"),
-				new Builder("org.eclipse.m2e.core.maven2Builder", "Default Maven Builder"));
-	}
-
-	public List<Nature> defaultJavaNatures() {
-		return Arrays.asList(
-				new Nature("org.eclipse.jdt.core.javanature", "Default Java Nature"),
-				new Nature("org.eclipse.m2e.core.maven2Nature", "Default Maven Nature"));
-	}
-
-	public List<Nature> defaultM2eNatures() {
-		return Arrays.asList(
-				new Nature("org.eclipse.m2e.core.maven2Nature", "Default Maven Nature"));
-	}
-
-	protected Resource readResource(org.apache.maven.model.Resource resource) {
-		return new Resource(resource.getDirectory(), resource.getIncludes(), resource.getExcludes());
-	}
-
-	protected ProjectConfig readPomProjectConfig() {
-		ProjectConfig projectConfig = new ProjectConfig()
-				.withName(Optional.lift(mavenProject.getName())
-						.orElse(Optional.lift(mavenProject.getArtifactId()))
-						.getOrElse("undefined"))
-				.withComment(Optional.lift(mavenProject.getDescription()).getOrElse(""))
-				.withSources(mavenProject.getCompileSourceRoots())
-				.withTestSources(mavenProject.getTestCompileSourceRoots())
-				.withResources(map(mavenProject.getBuild().getResources(), r -> readResource(r)))
-				.withTestResources(map(mavenProject.getBuild().getTestResources(), r -> readResource(r)));
-
-		final Optional<String> encoding = Optional
-				.lift(mavenProject.getProperties().getProperty("project.build.sourceEncoding"))
-				.orElse(Optional.lift("UTF-8"));
-		projectConfig = projectConfig.withEncoding(encoding);
-
-		if (defaultBuilders) {
-			// Add M2e nature and builder
-			projectConfig = projectConfig
-					.withBuilders(concat(projectConfig.getBuilders(), defaultM2eBuilders()))
-					.withNatures(concat(projectConfig.getNatures(), defaultM2eNatures()));
-		}
-		return projectConfig;
-	}
-
-	protected ProjectConfig readFullProjectConfig() {
-
-		final List<Builder> autodetectBuilders = !autodetect ? Collections.emptyList() : autodetectableBuilders();
-		final List<Nature> autodetectNatures = !autodetect ? Collections.emptyList() : autodetectableNatures();
-
-		// initial config from pom
-
-		ProjectConfig projectConfig = readPomProjectConfig();
-
-		if (defaultBuilders) {
-			projectConfig = projectConfig
-					.withBuilders(concat(projectConfig.getBuilders(), defaultJavaBuilders()))
-					.withNatures(concat(projectConfig.getNatures(), defaultJavaNatures()));
-		}
-
-		final Optional<String> javaVersion = Optional
-				.lift(mavenProject.getProperties().getProperty("maven.compiler.source"))
-				.orElse(Optional.lift(mavenProject.getProperties().getProperty("maven.compiler.target")))
-				.orElse(projectConfig.getJavaVersion());
-		projectConfig = projectConfig.withJavaVersion(javaVersion);
-
-		final List<Plugin> plugins = mavenProject.getBuild().getPlugins();
-		for (final Plugin plugin : plugins) {
-			{
-				// Auto-detectable Builders
-				final List<Builder> detectedBuilders = filter(
-						autodetectBuilders,
-						a -> exists(a.getMavenPluginKeys(), k -> k.equals(plugin.getKey())));
-
-				if (!detectedBuilders.isEmpty()) {
-					getLog().debug("Auto-detected builders [" + detectedBuilders + "] for plugin ["
-							+ plugin.getKey() + "]");
-				}
-
-				// determines, if a given builderName should be excluded
-				final F1<String, Boolean> excludeB = builderName -> exists(
-						detectedBuilders,
-						b -> exists(
-								b.getDisablesBuilders(),
-								disablesBuilder -> {
-									final boolean disable = builderName.equals(disablesBuilder);
-									if (disable) {
-										getLog().debug(
-												"Auto-detected builder [" + b + "] disables default builder ["
-														+ builderName + "]");
-									}
-									return disable;
-								}));
-
-				// default Builder (if allowed) minus excluded ones plus
-				// auto-detected ones
-				final List<Builder> filteredBuilders = filter(projectConfig.getBuilders(),
-						b -> !excludeB.apply(b.getName()));
-
-				projectConfig = projectConfig.withBuilders(concat(filteredBuilders, detectedBuilders));
-			}
-
-			{
-				// Auto-detectable Natures
-				final List<Nature> detectedNatures = filter(
-						autodetectNatures,
-						a -> exists(a.getMavenPluginKeys(), k -> k.equals(plugin.getKey())));
-
-				if (!detectedNatures.isEmpty()) {
-					getLog().debug("Auto-detected natures [" + detectedNatures + "] for plugin ["
-							+ plugin.getKey() + "]");
-				}
-
-				// determines, if a given natureName should be excluded
-				final F1<String, Boolean> excludeN = natureName -> exists(
-						detectedNatures,
-						n -> exists(
-								n.getDisablesNatures(),
-								disablesNature -> {
-									final boolean disable = natureName.equals(disablesNature);
-									if (disable) {
-										getLog().debug("Auto-detected nature [" + n + "] disables default nature ["
-												+ natureName + "]");
-									}
-									return disable;
-								}));
-
-				// default nature (if allowed) minus excluded ones plus
-				// auto-detected ones
-				final List<Nature> filteredNatures = filter(
-						projectConfig.getNatures(),
-						b -> !excludeN.apply(b.getName()));
-
-				projectConfig = projectConfig.withNatures(concat(filteredNatures, detectedNatures));
-
-			}
-		}
-
+	protected ProjectConfig extraConfigEnhancements(final ProjectConfig projectConfig, MavenProject mavenProject) {
 		// enhance with config values
-		projectConfig = projectConfig
+		return projectConfig
 				.withSources(concat(projectConfig.getSources(), extraSources))
-				.withResources(
-						concat(projectConfig.getResources(),
-								map(extraResources, r -> new Resource().withPath(r))))
+				.withResources(concat(projectConfig.getResources(),
+						map(extraResources, r -> new Resource().withPath(r))))
 				.withTestSources(concat(projectConfig.getTestSources(), extraTestSources))
-				.withTestResources(
-						concat(projectConfig.getTestResources(),
-								map(extraTestResources, r -> new Resource().withPath(r))))
+				.withTestResources(concat(projectConfig.getTestResources(),
+						map(extraTestResources, r -> new Resource().withPath(r))))
 				.withBuilders(concat(projectConfig.getBuilders(),
 						map(extraBuilders, b -> new Builder(b, "Explicit Builder from pom"))))
 				.withNatures(concat(projectConfig.getNatures(),
 						map(extraNatures, n -> new Nature(n, "Explicit Nature from pom"))));
-		return projectConfig;
-	}
-
-	protected List<Nature> autodetectableNatures() {
-		return Arrays.asList(
-				new Nature("org.eclipse.ajdt.ui.ajnature", "Auto-detected AspectJ Nature from pom",
-						Collections.emptyList(),
-						Arrays.asList("org.codehaus.mojo:aspectj-maven-plugin")),
-				new Nature(
-						"org.scala-ide.sdt.core.scalanature", "Auto-detected Scala Nature from pom",
-						Collections.emptyList(),
-						Arrays.asList(
-								"net.alchim31.maven:scala-maven-plugin",
-								"com.google.code.sbt-compiler-maven-plugin:sbt-compiler-maven-plugin",
-								"com.carrotgarden.maven:scalor-maven-plugin_2.12",
-								"com.carrotgarden.maven:scalor-maven-plugin_2.13")));
-	}
-
-	protected List<Builder> autodetectableBuilders() {
-		return Arrays.asList(
-				new Builder(
-						"org.eclipse.ajdt.core.ajbuilder", "Auto-detected AspectJ Builder from pom",
-						Arrays.asList("org.eclipse.jdt.core.javabuilder"),
-						Arrays.asList("org.codehaus.mojo:aspectj-maven-plugin")),
-				new Builder(
-						"org.scala-ide.sdt.core.scalabuilder", "Auto-detected Scala Builder from pom",
-						Arrays.asList("org.eclipse.jdt.core.javabuilder"),
-						Arrays.asList(
-								"net.alchim31.maven:scala-maven-plugin",
-								"com.google.code.sbt-compiler-maven-plugin:sbt-compiler-maven-plugin",
-								"com.carrotgarden.maven:scalor-maven-plugin_2.12",
-								"com.carrotgarden.maven:scalor-maven-plugin_2.13")));
 	}
 
 	@Override
@@ -382,22 +202,28 @@ public class EclipseMojo extends AbstractMojo {
 		}
 
 		final File basedir = mavenProject.getBasedir();
-		final Tasks tasks = new Tasks(basedir);
+		final Tasks tasks = new Tasks(basedir, Optional.of(getLog()));
 
 		final String packaging = mavenProject.getPackaging();
 
-		final ProjectConfig projectConfig;
-		if ("pom".equals(packaging)) {
-			projectConfig = readPomProjectConfig();
-		} else {
-			projectConfig = readFullProjectConfig();
-		}
+		List<MavenProjectAnalyzer> analyzers = Arrays.asList(
+				new MinimalPomAnalyzer(getLog()),
+				new JavaProjectAnalyzer(getLog(), defaultBuilders),
+				new ScalaProjectAnalyzer(getLog(), autodetect),
+				new AspectjProjectAnalyzer(getLog(), autodetect),
+				(pc, mp) -> extraConfigEnhancements(pc, mp),
+				new M2eProjectAnalyzer(getLog(), defaultBuilders));
+
+		ProjectConfig projectConfig = foldLeft(
+				analyzers,
+				new ProjectConfig(),
+				(pc, a) -> a.analyze(pc, mavenProject));
 
 		// Reading/checking templates
 		final Map<String, String> templates = new LinkedHashMap<>();
 		// First, add templates from template dir
 		if (settingsTemplatesDir != null && settingsTemplatesDir.exists()) {
-			final File[] files = Optional.lift(settingsTemplatesDir.listFiles()).getOrElse(new File[0]);
+			final File[] files = Optional.of(settingsTemplatesDir.listFiles()).getOrElse(new File[0]);
 			foreach(
 					filter(files, f -> f.isFile()),
 					f -> templates.put(f.getName(), f.getAbsolutePath()));
@@ -428,7 +254,7 @@ public class EclipseMojo extends AbstractMojo {
 			generateFile(classpathFile, dryrun, printStream -> {
 				tasks.generateClasspathFileContent(
 						printStream, projectConfig,
-						Optional.lift(alternativeOutput),
+						Optional.of(alternativeOutput),
 						outputDirectory, testOutputDirectory,
 						sourcesOptional);
 			});

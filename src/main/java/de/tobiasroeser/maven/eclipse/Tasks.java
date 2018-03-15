@@ -1,5 +1,6 @@
 package de.tobiasroeser.maven.eclipse;
 
+import static de.tototec.utils.functional.FList.contains;
 import static de.tototec.utils.functional.FList.flatten;
 import static de.tototec.utils.functional.FList.foreach;
 import static de.tototec.utils.functional.FList.map;
@@ -12,6 +13,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.maven.plugin.logging.Log;
+
 import de.tototec.utils.functional.Optional;
 
 /**
@@ -20,9 +23,11 @@ import de.tototec.utils.functional.Optional;
 public class Tasks {
 
 	private final File basedir;
+	private final Optional<Log> log;
 
-	public Tasks(final File basedir) {
+	public Tasks(final File basedir, Optional<Log> log) {
 		this.basedir = basedir;
+		this.log = log;
 	}
 
 	public void generateProjectFile(
@@ -39,17 +44,25 @@ public class Tasks {
 
 		printStream.println("\t<buildSpec>");
 		foreach(projectConfig.getBuilders(), b -> {
-			printStream.println("\t\t<buildCommand>");
-			printStream.println("\t\t\t<name>" + b.getName() + "</name>");
-			printStream.println("\t\t\t<arguments>");
-			printStream.println("\t\t\t</arguments>");
-			printStream.println("\t\t</buildCommand>");
+			if (contains(projectConfig.getDisabledBuilders(), b.getName())) {
+				log.foreach(l -> l.debug("Builder [" + b.getName() + "] will be not added as it is disabled"));
+			} else {
+				printStream.println("\t\t<buildCommand>");
+				printStream.println("\t\t\t<name>" + b.getName() + "</name>");
+				printStream.println("\t\t\t<arguments>");
+				printStream.println("\t\t\t</arguments>");
+				printStream.println("\t\t</buildCommand>");
+			}
 		});
 		printStream.println("\t</buildSpec>");
 
 		printStream.println("\t<natures>");
 		foreach(projectConfig.getNatures(), n -> {
-			printStream.println("\t\t<nature>" + n.getName() + "</nature>");
+			if (contains(projectConfig.getDisabledNatures(), n.getName())) {
+				log.foreach(l -> l.debug("Nature [" + n.getName() + "] will be not added as it is disabled"));
+			} else {
+				printStream.println("\t\t<nature>" + n.getName() + "</nature>");
+			}
 		});
 		printStream.println("\t</natures>");
 
@@ -105,20 +118,9 @@ public class Tasks {
 						sourcesOptional, s.getIncludes(), s.getExcludes()));
 
 		// con
-		projectConfig.getJavaVersion().foreach(javaVersion -> {
-			final String jrePrefix = "org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/";
-			final String jreSuffix;
-			if ("1.5".equals(javaVersion) || "1.4".equals(javaVersion)) {
-				jreSuffix = "J2SE-" + javaVersion;
-			} else {
-				jreSuffix = "JavaSE-" + javaVersion;
-			}
-
-			generateClasspathEntry(printStream, "con", jrePrefix + jreSuffix, Optional.none(), false);
+		foreach(projectConfig.getClasspathContainers(), cp -> {
+			generateClasspathEntry(printStream, "con", cp, Optional.none(), false);
 		});
-
-		generateClasspathEntry(printStream, "con", "org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER", Optional.none(),
-				false);
 
 		// output
 		printStream.println("\t<classpathentry kind=\"output\" path=\""

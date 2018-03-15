@@ -25,12 +25,6 @@
     </dependency>
   </dependencies>
   <build>
-    <resources>
-      <resource>
-        <filtering>false</filtering>
-        <directory>src/main/resources</directory>
-      </resource>
-    </resources>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -40,15 +34,12 @@
           <execution>
             <id>default-testCompile</id>
             <phase>none</phase>
-            <inherited>true</inherited>
           </execution>
           <execution>
             <id>default-compile</id>
             <phase>none</phase>
-            <inherited>true</inherited>
           </execution>
         </executions>
-        <inherited>true</inherited>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -62,7 +53,6 @@
             <goals>
               <goal>compile</goal>
             </goals>
-            <inherited>true</inherited>
           </execution>
           <execution>
             <id>compile-test-sources</id>
@@ -70,7 +60,6 @@
             <goals>
               <goal>test-compile</goal>
             </goals>
-            <inherited>true</inherited>
           </execution>
         </executions>
         <dependencies>
@@ -78,7 +67,6 @@
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjtools</artifactId>
             <version>1.8.10</version>
-            <optional>false</optional>
           </dependency>
         </dependencies>
         <configuration>
@@ -114,7 +102,6 @@
         <groupId>de.tototec</groupId>
         <artifactId>de.tobiasroeser.eclipse-maven-plugin</artifactId>
         <version>@project.version@</version>
-        <extensions>false</extensions>
         <executions>
           <execution>
             <id>update-eclipse-projects</id>
