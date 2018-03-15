@@ -1,5 +1,6 @@
 package de.tobiasroeser.maven.eclipse;
 
+import static de.tototec.utils.functional.FList.append;
 import static de.tototec.utils.functional.FList.concat;
 import static de.tototec.utils.functional.FList.contains;
 import static de.tototec.utils.functional.FList.filter;
@@ -11,14 +12,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.LineNumberReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -183,7 +183,7 @@ public class EclipseMojo extends AbstractMojo {
 
 	protected ProjectConfig extraConfigEnhancements(final ProjectConfig projectConfig, MavenProject mavenProject) {
 		// enhance with config values
-		return projectConfig
+		ProjectConfig updated = projectConfig
 				.withSources(concat(projectConfig.getSources(), extraSources))
 				.withResources(concat(projectConfig.getResources(),
 						map(extraResources, r -> new Resource().withPath(r))))
@@ -194,6 +194,41 @@ public class EclipseMojo extends AbstractMojo {
 						map(extraBuilders, b -> new Builder(b, "Explicit Builder from pom"))))
 				.withNatures(concat(projectConfig.getNatures(),
 						map(extraNatures, n -> new Nature(n, "Explicit Nature from pom"))));
+
+		final File basedir = mavenProject.getBasedir();
+
+		// Reading/checking templates
+		final Map<String, File> templates = new LinkedHashMap<>();
+
+		// First, add templates from template dir
+		if (settingsTemplatesDir != null && settingsTemplatesDir.exists()) {
+			final File[] files = Optional.of(settingsTemplatesDir.listFiles()).getOrElse(new File[0]);
+			foreach(filter(files, f -> f.isFile()), f -> templates.put(f.getName(), f));
+		}
+
+		// Second, add explicit settings map
+		foreach(settingsTemplates.entrySet(), entry -> {
+			final String fileName = ".settings/" + entry.getKey();
+			final File templateFile = Optional.some(new File(entry.getValue()))
+					.map(f -> f.isAbsolute() ? f : new File(basedir, f.getPath())).get();
+			templates.put(entry.getKey(), templateFile);
+		});
+
+		// Read template files
+		for (final Entry<String, File> entry : templates.entrySet()) {
+			getLog().debug("Processing template file: " + entry.getValue());
+			List<String> lines;
+			try {
+				lines = Files.readAllLines(entry.getValue().toPath());
+				updated = updated.withSettingsFiles(
+						append(updated.getSettingsFiles(), new SettingsFile(entry.getKey(), lines)));
+			} catch (final IOException e) {
+				throw new RuntimeMojoException(
+						new MojoExecutionException("Could not read template file: " + entry.getValue(), e));
+			}
+		}
+
+		return updated;
 	}
 
 	@Override
@@ -202,109 +237,82 @@ public class EclipseMojo extends AbstractMojo {
 			getLog().info("Skipping eclipse");
 			return;
 		}
-
-		final File basedir = mavenProject.getBasedir();
-		final Tasks tasks = new Tasks(basedir, Optional.of(getLog()));
-
-		final String packaging = mavenProject.getPackaging();
-
-		final List<MavenProjectAnalyzer> analyzers = Arrays.asList(
-				new MinimalPomAnalyzer(getLog()),
-				new JavaProjectAnalyzer(getLog(), defaultBuilders),
-				new ScalaProjectAnalyzer(getLog(), autodetect),
-				new AspectjProjectAnalyzer(getLog(), autodetect),
-				(pc, mp) -> extraConfigEnhancements(pc, mp),
-				new M2eProjectAnalyzer(getLog(), defaultBuilders));
-
-		final ProjectConfig projectConfig = foldLeft(
-				analyzers,
-				new ProjectConfig(),
-				(pc, a) -> a.analyze(pc, mavenProject));
-
-		// Reading/checking templates
-		final Map<String, String> templates = new LinkedHashMap<>();
-		// First, add templates from template dir
-		if (settingsTemplatesDir != null && settingsTemplatesDir.exists()) {
-			final File[] files = Optional.of(settingsTemplatesDir.listFiles()).getOrElse(new File[0]);
-			foreach(
-					filter(files, f -> f.isFile()),
-					f -> templates.put(f.getName(), f.getAbsolutePath()));
-		}
-		templates.putAll(settingsTemplates);
-
-		final List<String> settingsFileNames = concat(templates.keySet(),
-				map(projectConfig.getSettingsFiles(), s -> s.getName()));
-
-		getLog().debug("Final eclipse project config: " + projectConfig);
-
-		final File projectFile = new File(basedir, ".project");
-		generateFile(projectFile, dryrun, printStream -> {
-			tasks.generateProjectFile(printStream, projectConfig);
-		});
-
-		if (!contains(settingsFileNames, ORG_ECLIPSE_M2E_CORE_PREFS)) {
-			generateFile(new File(basedir, ".settings/" + ORG_ECLIPSE_M2E_CORE_PREFS), dryrun, printStream -> {
-				tasks.generateSettingOrgEclipseM2eCorePrefs(printStream, activeProfiles);
-			});
-		}
-
-		if (!contains(settingsFileNames, ORG_ECLIPSE_CORE_RESOURCES_PREFS)) {
-			generateFile(new File(basedir, ".settings/" + ORG_ECLIPSE_CORE_RESOURCES_PREFS), dryrun, printStream -> {
-				tasks.generateSettingOrgEclipseCoreResourcesPrefs(printStream, projectConfig);
-			});
-		}
-
-		if (!"pom".equals(packaging)) {
-			final File classpathFile = new File(basedir, ".classpath");
-			generateFile(classpathFile, dryrun, printStream -> {
-				tasks.generateClasspathFileContent(
-						printStream, projectConfig,
-						Optional.of(alternativeOutput),
-						outputDirectory, testOutputDirectory,
-						sourcesOptional);
-			});
-
-			if (!contains(settingsFileNames, ORG_ECLIPSE_JDT_CORE_PREFS)) {
-				generateFile(new File(basedir, ".settings/" + ORG_ECLIPSE_JDT_CORE_PREFS), dryrun, printStream -> {
-					tasks.generateSettingOrgEclipseJdtCorePrefs(printStream, projectConfig.getJavaVersion());
-				});
-			}
-		}
-
-		for (final SettingsFile settingsFile : projectConfig.getSettingsFiles()) {
-			generateFile(new File(basedir, ".settings/" + settingsFile.getName()), dryrun, printStream -> {
-				foreach(settingsFile.getContent(), line -> printStream.println(line));
-			});
-		}
-
+		// We handle wrapped mojo exceptions here
 		try {
-			for (final Entry<String, String> entry : templates.entrySet()) {
-				final String fileName = ".settings/" + entry.getKey();
-				final File templateFile = Optional.some(new File(entry.getValue()))
-						.map(f -> f.isAbsolute() ? f : new File(basedir, f.getPath())).get();
-				getLog().debug("Processing template file: " + templateFile);
-				// we need to wrap the exception because our foreach-loop
-				// cannot handle checked exceptions
-				generateFile(new File(basedir, fileName), dryrun, printStream -> {
-					try (FileReader in = new FileReader(templateFile);
-							LineNumberReader lnr = new LineNumberReader(in);) {
-						String line;
-						while ((line = lnr.readLine()) != null) {
-							printStream.println(line);
-						}
-					} catch (final IOException e) {
-						throw new RuntimeException("WRAP",
-								new MojoExecutionException("Could not read template file " + templateFile));
-					}
+			final File basedir = mavenProject.getBasedir();
+			final Tasks tasks = new Tasks(basedir, Optional.of(getLog()));
+
+			final String packaging = mavenProject.getPackaging();
+
+			final List<MavenProjectAnalyzer> analyzers = Arrays.asList(
+					new MinimalPomAnalyzer(getLog()),
+					new JavaProjectAnalyzer(getLog(), defaultBuilders),
+					new ScalaProjectAnalyzer(getLog(), autodetect),
+					new AspectjProjectAnalyzer(getLog(), autodetect),
+					(pc, mp) -> extraConfigEnhancements(pc, mp),
+					new M2eProjectAnalyzer(getLog(), defaultBuilders));
+
+			final ProjectConfig projectConfig = foldLeft(
+					analyzers,
+					new ProjectConfig(),
+					(pc, a) -> a.analyze(pc, mavenProject));
+
+			final List<String> settingsFileNames = map(projectConfig.getSettingsFiles(), s -> s.getName());
+
+			getLog().debug("Final eclipse project config: " + projectConfig);
+
+			final File projectFile = new File(basedir, ".project");
+			generateFile(projectFile, dryrun, printStream -> {
+				tasks.generateProjectFile(printStream, projectConfig);
+			});
+
+			if (!contains(settingsFileNames, ORG_ECLIPSE_M2E_CORE_PREFS)) {
+				generateFile(new File(basedir, ".settings/" + ORG_ECLIPSE_M2E_CORE_PREFS), dryrun, printStream -> {
+					tasks.generateSettingOrgEclipseM2eCorePrefs(printStream, activeProfiles);
 				});
 			}
-		} catch (final RuntimeException e) {
-			if (e.getCause() instanceof MojoExecutionException) {
-				throw (MojoExecutionException) e.getCause();
+
+			if (!contains(settingsFileNames, ORG_ECLIPSE_CORE_RESOURCES_PREFS)) {
+				generateFile(new File(basedir, ".settings/" + ORG_ECLIPSE_CORE_RESOURCES_PREFS), dryrun,
+						printStream -> {
+							tasks.generateSettingOrgEclipseCoreResourcesPrefs(printStream, projectConfig);
+						});
+			}
+
+			if (!"pom".equals(packaging)) {
+				final File classpathFile = new File(basedir, ".classpath");
+				generateFile(classpathFile, dryrun, printStream -> {
+					tasks.generateClasspathFileContent(
+							printStream, projectConfig,
+							Optional.of(alternativeOutput),
+							outputDirectory, testOutputDirectory,
+							sourcesOptional);
+				});
+
+				if (!contains(settingsFileNames, ORG_ECLIPSE_JDT_CORE_PREFS)) {
+					generateFile(new File(basedir, ".settings/" + ORG_ECLIPSE_JDT_CORE_PREFS), dryrun, printStream -> {
+						tasks.generateSettingOrgEclipseJdtCorePrefs(printStream, projectConfig.getJavaVersion());
+					});
+				}
+			}
+
+			for (final SettingsFile settingsFile : projectConfig.getSettingsFiles()) {
+				generateFile(new File(basedir, ".settings/" + settingsFile.getName()), dryrun, printStream -> {
+					foreach(settingsFile.getContent(), line -> printStream.println(line));
+				});
+			}
+
+		} catch (final RuntimeMojoException e) {
+			final Throwable cause = e.getCause();
+			if (cause instanceof MojoExecutionException) {
+				throw (MojoExecutionException) cause;
+			} else if (cause instanceof MojoFailureException) {
+				throw (MojoFailureException) cause;
 			} else {
 				throw e;
 			}
 		}
+
 	}
 
 	protected void generateFile(final File file, final boolean dryrun, final Procedure1<PrintStream> generator)
