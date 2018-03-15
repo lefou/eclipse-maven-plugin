@@ -61,6 +61,11 @@ For more information refer the https://lefou.github.io/eclipse-maven-plugin/{rel
 
 == Changelog
 
+=== {master}
+
+* Added integration test suite
+* Generate addtional scala settings files
+
 === eclipse-maven-plugin 0.0.4 - 2018-03-14
 
 * Adapted `ProjectConfig.javaVersion` to changed versioning scheme for Java 9+

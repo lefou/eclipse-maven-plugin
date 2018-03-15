@@ -70,18 +70,7 @@ public class Tasks {
 	}
 
 	public String relativePath(final String file) {
-		final String relPath;
-		if (new File(file).isAbsolute()) {
-			final URI basePath = basedir.toURI();
-			relPath = basePath.relativize(new File(file).toURI()).getPath();
-		} else {
-			relPath = file;
-		}
-		if (relPath.length() > 1 && relPath.endsWith("/")) {
-			return relPath.substring(0, relPath.length() - 1);
-		} else {
-			return relPath;
-		}
+		return Util.relativePath(basedir, file);
 	}
 
 	public Optional<String> whenUndefined(final Optional<?> predicate, final String useWhenDefined) {

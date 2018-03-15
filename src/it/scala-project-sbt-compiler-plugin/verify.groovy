@@ -149,8 +149,19 @@ org.eclipse.jdt.core.compiler.source=1.8"""
 
 expectEquals(
   Files.readAllLines(new File(settingsdir, "org.scala-ide.sdt.core.prefs").toPath()).join("\n"),
-  """scala.compiler.installation=2.11
+  """//src/main/java=main
+//src/main/scala=main
+//src/main/resources=main
+//src/main/binaryResources=main
+//src/test/java=tests
+//src/test/scala=tests
+//src/test/resources=tests
+//src/test/binaryResources=tests
+scala.compiler.installation=2.11
 scala.compiler.sourceLevel=2.11
-target=jvm-1.8"""
+scala.compiler.useProjectSettings=true
+stopBuildOnError=true
+target=jvm-1.8
+useScopesCompiler=true"""
 )
 

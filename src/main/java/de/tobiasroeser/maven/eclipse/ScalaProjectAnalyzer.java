@@ -3,6 +3,7 @@ package de.tobiasroeser.maven.eclipse;
 import static de.tototec.utils.functional.FList.append;
 import static de.tototec.utils.functional.FList.exists;
 import static de.tototec.utils.functional.FList.flatten;
+import static de.tototec.utils.functional.FList.map;
 import static de.tototec.utils.functional.FList.mkString;
 import static de.tototec.utils.functional.FList.take;
 
@@ -60,11 +61,27 @@ public class ScalaProjectAnalyzer implements MavenProjectAnalyzer {
 
 				final Optional<String> javaVersion = projectConfig.getJavaVersion();
 
+				class Helper {
+					String relativePath(String path) {
+						return Util.relativePath(mavenProject, path);
+					}
+				}
+				final Helper util = new Helper();
+
 				final List<String> settings = flatten(
 						Arrays.asList(
+								map(projectConfig.getSources(), s -> "//" + util.relativePath(s) + "=main"),
+								map(projectConfig.getResources(), s -> "//" + util.relativePath(s.getPath()) + "=main"),
+								map(projectConfig.getTestSources(), s -> "//" + util.relativePath(s) + "=tests"),
+								map(projectConfig.getTestResources(),
+										s -> "//" + util.relativePath(s.getPath()) + "=tests"),
 								scalaVersion.map(v -> "scala.compiler.installation=" + v),
 								scalaVersion.map(v -> "scala.compiler.sourceLevel=" + v),
-								javaVersion.map(v -> "target=jvm-" + v)));
+								Optional.some("scala.compiler.useProjectSettings=true"),
+								Optional.some("stopBuildOnError=true"),
+								javaVersion.map(v -> "target=jvm-" + v),
+								Optional.some("useScopesCompiler=true"),
+								Optional.none()));
 				final SettingsFile settingsFile = new SettingsFile("org.scala-ide.sdt.core.prefs", settings);
 
 				log.debug("Adding scala nature and builder, disabling java nature and builder");
