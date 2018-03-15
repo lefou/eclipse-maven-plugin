@@ -24,7 +24,7 @@ public class SettingsFile {
 	public String toString() {
 		return getClass().getSimpleName() +
 				"(name=" + name +
-				",content=" + content.size() + " lines" +
+				",content=<" + content.size() + " lines>" +
 				")";
 	}
 }

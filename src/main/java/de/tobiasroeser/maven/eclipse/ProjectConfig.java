@@ -6,7 +6,6 @@ import static de.tototec.utils.functional.FList.take;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import de.tototec.utils.functional.Optional;
 
@@ -78,7 +77,7 @@ public class ProjectConfig {
 	}
 
 	public static String javaVersion(final String javaVersion) {
-		String[] parts = javaVersion.split("[.]");
+		final String[] parts = javaVersion.split("[.]");
 		if (parts[0].startsWith("9") || parts[0].length() > 1) {
 			return parts[0];
 		} else {

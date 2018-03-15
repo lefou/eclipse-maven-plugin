@@ -208,7 +208,6 @@ public class EclipseMojo extends AbstractMojo {
 
 		// Second, add explicit settings map
 		foreach(settingsTemplates.entrySet(), entry -> {
-			final String fileName = ".settings/" + entry.getKey();
 			final File templateFile = Optional.some(new File(entry.getValue()))
 					.map(f -> f.isAbsolute() ? f : new File(basedir, f.getPath())).get();
 			templates.put(entry.getKey(), templateFile);
