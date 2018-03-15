@@ -105,10 +105,8 @@ Model(
       // Run integration tests
       Plugin(
         Plugins.invoker,
-        dependencies = Seq(
-          Deps.lambdaTest
-        ),
         configuration = Config(
+          addTestClassPath = "true",
           debug = "true",
           settingsFile = "src/it/settings.xml",
           localRepositoryPath = "${project.build.directory}/local-repo",
