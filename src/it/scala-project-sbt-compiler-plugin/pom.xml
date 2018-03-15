@@ -10,6 +10,7 @@
   <description>project description</description>
   <properties>
     <java.version>1.8</java.version>
+    <scala.version>2.11</scala.version>
   </properties>
   <dependencies>
     <dependency>

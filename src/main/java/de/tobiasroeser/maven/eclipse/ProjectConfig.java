@@ -6,6 +6,7 @@ import static de.tototec.utils.functional.FList.take;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import de.tototec.utils.functional.Optional;
 
@@ -27,6 +28,7 @@ public class ProjectConfig {
 	private final List<String> disabledNatures;
 	private final List<String> disabledBuilders;
 	private final List<String> classpathContainers;
+	private final List<SettingsFile> settingsFiles;
 
 	public ProjectConfig() {
 		this("", "",
@@ -38,6 +40,7 @@ public class ProjectConfig {
 				Collections.emptyList(),
 				Optional.of(System.getProperty("java.version")).map(v -> javaVersion(v)),
 				Optional.none(),
+				Collections.emptyList(),
 				Collections.emptyList(),
 				Collections.emptyList(),
 				Collections.emptyList());
@@ -56,7 +59,8 @@ public class ProjectConfig {
 			final Optional<String> encoding,
 			List<String> disabledNatures,
 			List<String> disabledBuilders,
-			List<String> classpathContainers) {
+			List<String> classpathContainers,
+			List<SettingsFile> settingsFiles) {
 		this.name = name;
 		this.comment = comment;
 		this.sources = distinct(sources);
@@ -70,6 +74,7 @@ public class ProjectConfig {
 		this.disabledNatures = disabledNatures;
 		this.disabledBuilders = disabledBuilders;
 		this.classpathContainers = classpathContainers;
+		this.settingsFiles = settingsFiles;
 	}
 
 	public static String javaVersion(final String javaVersion) {
@@ -86,8 +91,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withName(final String name) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers);
+		return  new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
 	}
 
 	public String getComment() {
@@ -95,8 +100,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withComment(final String comment) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers);
+		return  new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
 	}
 
 	public List<String> getSources() {
@@ -104,8 +109,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withSources(final List<String> sources) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers);
+		return  new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
 	}
 
 	public List<String> getTestSources() {
@@ -113,8 +118,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withTestSources(final List<String> testSources) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers);
+		return  new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
 	}
 
 	public List<Resource> getResources() {
@@ -122,8 +127,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withResources(final List<Resource> resources) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers);
+		return  new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
 	}
 
 	public List<Resource> getTestResources() {
@@ -131,8 +136,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withTestResources(final List<Resource> testResources) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers);
+		return  new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
 	}
 
 	public List<Builder> getBuilders() {
@@ -140,8 +145,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withBuilders(final List<Builder> builders) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers);
+		return  new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
 	}
 
 	public List<Nature> getNatures() {
@@ -149,8 +154,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withNatures(final List<Nature> natures) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers);
+		return  new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
 	}
 
 	public Optional<String> getJavaVersion() {
@@ -158,8 +163,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withJavaVersion(final Optional<String> javaVersion) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers);
+		return  new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
 	}
 
 	public Optional<String> getEncoding() {
@@ -167,8 +172,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withEncoding(final Optional<String> encoding) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers);
+		return  new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
 	}
 
 	public List<String> getDisabledBuilders() {
@@ -176,8 +181,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withDisabledBuilders(final List<String> disabledBuilders) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers);
+		return  new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
 	}
 
 	public List<String> getDisabledNatures() {
@@ -185,8 +190,8 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withDisabledNatures(final List<String> disabledNatures) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers);
+		return  new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
 	}
 
 	public List<String> getClasspathContainers() {
@@ -194,9 +199,20 @@ public class ProjectConfig {
 	}
 
 	public ProjectConfig withClasspathContainers(List<String> classpathContainers) {
-		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
-				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers);
+		return  new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
 	}
+	
+	public List<SettingsFile> getSettingsFiles() {
+		return settingsFiles;
+	}
+
+
+	public ProjectConfig withSettingsFiles(List<SettingsFile> settingsFiles) {
+		return new ProjectConfig(name, comment, sources, testSources, resources, testResources, builders, natures,
+				javaVersion, encoding, disabledNatures, disabledBuilders, classpathContainers, settingsFiles);
+	}
+
 
 	@Override
 	public String toString() {
@@ -211,6 +227,10 @@ public class ProjectConfig {
 				"\n  natures: " + natures +
 				"\n  javaVersion: " + javaVersion +
 				"\n  encoding: " + encoding +
+				"\n  disabledNatures: "+ disabledNatures +
+				"\n  disabledBuilders: " + disabledBuilders +
+				"\n  classpathContainers: " + classpathContainers +
+				"\n  settingsFiles: " + settingsFiles +
 				"\n}";
 	}
 }

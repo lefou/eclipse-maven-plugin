@@ -12,7 +12,12 @@ settingsdir = new File(basedir, ".settings")
 
 expectEquals(
   settingsdir.listFiles().collect { it.getName() }.toSet(),
-  ["org.eclipse.core.resources.prefs", "org.eclipse.jdt.core.prefs", "org.eclipse.m2e.core.prefs"].toSet()
+  [
+    "org.eclipse.core.resources.prefs", 
+    "org.eclipse.jdt.core.prefs", 
+    "org.eclipse.m2e.core.prefs",
+    "org.scala-ide.sdt.core.prefs"
+  ].toSet()
 )
 
 expectEquals(
@@ -139,5 +144,13 @@ expectEquals(
 org.eclipse.jdt.core.compiler.codegen.targetPlatform=1.8
 org.eclipse.jdt.core.compiler.compliance=1.8
 org.eclipse.jdt.core.compiler.source=1.8"""
+)
+
+
+expectEquals(
+  Files.readAllLines(new File(settingsdir, "org.scala-ide.sdt.core.prefs").toPath()).join("\n"),
+  """scala.compiler.installation=2.11
+scala.compiler.sourceLevel=2.11
+target=jvm-1.8"""
 )
 

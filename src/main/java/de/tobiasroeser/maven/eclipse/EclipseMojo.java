@@ -1,6 +1,7 @@
 package de.tobiasroeser.maven.eclipse;
 
 import static de.tototec.utils.functional.FList.concat;
+import static de.tototec.utils.functional.FList.contains;
 import static de.tototec.utils.functional.FList.filter;
 import static de.tototec.utils.functional.FList.foldLeft;
 import static de.tototec.utils.functional.FList.foreach;
@@ -23,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -206,7 +208,7 @@ public class EclipseMojo extends AbstractMojo {
 
 		final String packaging = mavenProject.getPackaging();
 
-		List<MavenProjectAnalyzer> analyzers = Arrays.asList(
+		final List<MavenProjectAnalyzer> analyzers = Arrays.asList(
 				new MinimalPomAnalyzer(getLog()),
 				new JavaProjectAnalyzer(getLog(), defaultBuilders),
 				new ScalaProjectAnalyzer(getLog(), autodetect),
@@ -214,7 +216,7 @@ public class EclipseMojo extends AbstractMojo {
 				(pc, mp) -> extraConfigEnhancements(pc, mp),
 				new M2eProjectAnalyzer(getLog(), defaultBuilders));
 
-		ProjectConfig projectConfig = foldLeft(
+		final ProjectConfig projectConfig = foldLeft(
 				analyzers,
 				new ProjectConfig(),
 				(pc, a) -> a.analyze(pc, mavenProject));
@@ -230,6 +232,9 @@ public class EclipseMojo extends AbstractMojo {
 		}
 		templates.putAll(settingsTemplates);
 
+		final List<String> settingsFileNames = concat(templates.keySet(),
+				map(projectConfig.getSettingsFiles(), s -> s.getName()));
+
 		getLog().debug("Final eclipse project config: " + projectConfig);
 
 		final File projectFile = new File(basedir, ".project");
@@ -237,13 +242,13 @@ public class EclipseMojo extends AbstractMojo {
 			tasks.generateProjectFile(printStream, projectConfig);
 		});
 
-		if (!templates.containsKey(ORG_ECLIPSE_M2E_CORE_PREFS)) {
+		if (!contains(settingsFileNames, ORG_ECLIPSE_M2E_CORE_PREFS)) {
 			generateFile(new File(basedir, ".settings/" + ORG_ECLIPSE_M2E_CORE_PREFS), dryrun, printStream -> {
 				tasks.generateSettingOrgEclipseM2eCorePrefs(printStream, activeProfiles);
 			});
 		}
 
-		if (!templates.containsKey(ORG_ECLIPSE_CORE_RESOURCES_PREFS)) {
+		if (!contains(settingsFileNames, ORG_ECLIPSE_CORE_RESOURCES_PREFS)) {
 			generateFile(new File(basedir, ".settings/" + ORG_ECLIPSE_CORE_RESOURCES_PREFS), dryrun, printStream -> {
 				tasks.generateSettingOrgEclipseCoreResourcesPrefs(printStream, projectConfig);
 			});
@@ -259,41 +264,41 @@ public class EclipseMojo extends AbstractMojo {
 						sourcesOptional);
 			});
 
-			if (!templates.containsKey(ORG_ECLIPSE_JDT_CORE_PREFS)) {
+			if (!contains(settingsFileNames, ORG_ECLIPSE_JDT_CORE_PREFS)) {
 				generateFile(new File(basedir, ".settings/" + ORG_ECLIPSE_JDT_CORE_PREFS), dryrun, printStream -> {
 					tasks.generateSettingOrgEclipseJdtCorePrefs(printStream, projectConfig.getJavaVersion());
 				});
 			}
 		}
 
+		for (final SettingsFile settingsFile : projectConfig.getSettingsFiles()) {
+			generateFile(new File(basedir, ".settings/" + settingsFile.getName()), dryrun, printStream -> {
+				foreach(settingsFile.getContent(), line -> printStream.println(line));
+			});
+		}
+
 		try {
-			foreach(templates.entrySet(), entry -> {
+			for (final Entry<String, String> entry : templates.entrySet()) {
 				final String fileName = ".settings/" + entry.getKey();
 				final File templateFile = Optional.some(new File(entry.getValue()))
 						.map(f -> f.isAbsolute() ? f : new File(basedir, f.getPath())).get();
 				getLog().debug("Processing template file: " + templateFile);
 				// we need to wrap the exception because our foreach-loop
 				// cannot handle checked exceptions
-				try {
-					generateFile(new File(basedir, fileName), dryrun, printStream -> {
-						try (FileReader in = new FileReader(templateFile);
-								LineNumberReader lnr = new LineNumberReader(in);) {
-							String line;
-							while ((line = lnr.readLine()) != null) {
-								printStream.println(line);
-							}
-						} catch (final IOException e) {
-							throw new RuntimeException("WRAP",
-									new MojoExecutionException("Could not read template file " + templateFile));
+				generateFile(new File(basedir, fileName), dryrun, printStream -> {
+					try (FileReader in = new FileReader(templateFile);
+							LineNumberReader lnr = new LineNumberReader(in);) {
+						String line;
+						while ((line = lnr.readLine()) != null) {
+							printStream.println(line);
 						}
-					});
-				} catch (final MojoExecutionException e) {
-					throw new RuntimeException("WRAP", e);
-				}
-			});
-		} catch (
-
-		final RuntimeException e) {
+					} catch (final IOException e) {
+						throw new RuntimeException("WRAP",
+								new MojoExecutionException("Could not read template file " + templateFile));
+					}
+				});
+			}
+		} catch (final RuntimeException e) {
 			if (e.getCause() instanceof MojoExecutionException) {
 				throw (MojoExecutionException) e.getCause();
 			} else {
