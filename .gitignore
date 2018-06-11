@@ -3,6 +3,7 @@ target-ide/
 /pom.xml
 mvn-deploy-settings.xml
 /gh-pages
+.mvn.polyglot/
 
 # Eclipse files
 .project
