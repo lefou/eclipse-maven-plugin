@@ -81,24 +81,28 @@ expectEquals(
 	<classpathentry kind="src" path="src/test/java" output="target/test-classes">
 		<attributes>
 			<attribute name="optional" value="true"/>
+			<attribute name="test" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src/test/scala" output="target/test-classes">
 		<attributes>
 			<attribute name="optional" value="true"/>
+			<attribute name="test" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src/test/resources" output="target/test-classes">
 		<attributes>
 			<attribute name="optional" value="true"/>
+			<attribute name="test" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src/test/binaryResources" output="target/test-classes">
 		<attributes>
 			<attribute name="optional" value="true"/>
+			<attribute name="test" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>

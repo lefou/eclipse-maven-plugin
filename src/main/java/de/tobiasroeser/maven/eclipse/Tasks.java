@@ -8,7 +8,6 @@ import static de.tototec.utils.functional.FList.mkString;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -92,23 +91,23 @@ public class Tasks {
 		foreach(projectConfig.getSources(),
 				s -> generateClasspathEntry(printStream, "src", s,
 						whenUndefined(buildOutput, outputDirectory),
-						sourcesOptional));
+						sourcesOptional, false));
 		foreach(projectConfig.getResources(),
 				s -> generateClasspathEntry(printStream, "src", s.getPath(),
 						whenUndefined(buildOutput, outputDirectory),
-						sourcesOptional, s.getIncludes(), s.getExcludes()));
+						sourcesOptional, false, s.getIncludes(), s.getExcludes()));
 		foreach(projectConfig.getTestSources(),
 				s -> generateClasspathEntry(printStream, "src", s,
 						whenUndefined(buildOutput, testOutputDirectory),
-						sourcesOptional));
+						sourcesOptional, true));
 		foreach(projectConfig.getTestResources(),
 				s -> generateClasspathEntry(printStream, "src", s.getPath(),
 						whenUndefined(buildOutput, testOutputDirectory),
-						sourcesOptional, s.getIncludes(), s.getExcludes()));
+						sourcesOptional, true, s.getIncludes(), s.getExcludes()));
 
 		// con
 		foreach(projectConfig.getClasspathContainers(), cp -> {
-			generateClasspathEntry(printStream, "con", cp, Optional.none(), false);
+			generateClasspathEntry(printStream, "con", cp, Optional.none(), false, false);
 		});
 
 		// output
@@ -123,9 +122,10 @@ public class Tasks {
 			final String kind,
 			final String path,
 			final Optional<String> outputPath,
-			final boolean optional) {
+			final boolean optional,
+			final boolean test) {
 		generateClasspathEntry(printStream, kind, path, outputPath, optional,
-				Collections.emptyList(), Collections.emptyList());
+				test, Collections.emptyList(), Collections.emptyList());
 	}
 
 	protected void generateClasspathEntry(
@@ -134,8 +134,8 @@ public class Tasks {
 			final String path,
 			final Optional<String> outputPath,
 			final boolean optional,
-			final List<String> includes,
-			final List<String> excludes) {
+			boolean test,
+			final List<String> includes, final List<String> excludes) {
 
 		String normalizedPath;
 		if ("src".equals(kind)) {
@@ -160,6 +160,9 @@ public class Tasks {
 		printStream.println("\t\t<attributes>");
 		if (optional) {
 			printStream.println("\t\t\t<attribute name=\"optional\" value=\"true\"/>");
+		}
+		if(test) {
+		    printStream.println("\t\t\t<attribute name=\"test\" value=\"true\"/>");
 		}
 		printStream.println("\t\t\t<attribute name=\"maven.pomderived\" value=\"true\"/>");
 		printStream.println("\t\t</attributes>");
