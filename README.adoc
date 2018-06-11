@@ -1,5 +1,5 @@
 = Eclipse Maven Plugin
-:release-version: 0.1.0
+:release-version: 0.1.1
 // :site-url: https://lefou.github.io/eclipse-maven-plugin/latest/
 :site-url: https://lefou.github.io/eclipse-maven-plugin/{release-version}/
 
@@ -64,6 +64,10 @@ For more information refer the https://lefou.github.io/eclipse-maven-plugin/{rel
 === {master}
 
 Your contributions are welcome!
+
+=== eclipse-maven-plugin 0.1.1 - 2018-06-11
+
+* Added suport for main/test-source separation of Eclipse Phonon M5
 
 === eclipse-maven-plugin 0.1.0 - 2018-03-16
 
